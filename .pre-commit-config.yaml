@@ -1,0 +1,7 @@
+repos:
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: v0.5.0
+    hooks:
+      - id: go-mod-tidy
+      - id: golangci-lint
+      - id: go-unit-tests

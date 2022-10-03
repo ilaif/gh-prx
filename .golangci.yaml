@@ -1,0 +1,34 @@
+linters:
+  disable-all: true
+  enable:
+    # fast linters:
+    - goimports
+    - gocyclo
+    - goconst
+    - misspell
+    - ineffassign
+    - lll
+    - gci
+    - nlreturn
+    - forbidigo
+    - reassign
+    # slow linters:
+    - gosec
+    - gosimple
+    - govet
+    - errcheck
+    - gocritic
+    - importas
+    - revive
+    - typecheck
+    - unused
+    - wrapcheck
+linters-settings:
+  forbidigo: { forbid: ['fmt\.Errorf.*'] }
+  gci: { sections: [standard, default, prefix(github.com/ilaif/gh-prx)] }
+  wrapcheck: { ignorePackageGlobs: ["github.com/ilaif/gh-prx/**"] }
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+run:
+  timeout: 3m
