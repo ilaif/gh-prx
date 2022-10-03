@@ -1,6 +1,6 @@
 # gh-prx
 
-<img src="https://github.com/ilaif/gh-prx/raw/main/assets/logo.png" width="700">
+<img src="https://github.com/ilaif/gh-prx/raw/main/assets/logo.png" width="200">
 
 A GitHub (`gh`) CLI extension to automate the daily work with **branches**, **commits** and **pull requests**.
 
