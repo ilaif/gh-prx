@@ -120,6 +120,8 @@ func ParseBranch(name string, cfg BranchConfig) (Branch, error) {
 }
 
 func TemplateBranchName(branchCfg BranchConfig, issue *Issue) (string, error) {
+	log.Debug("Templating branch name")
+
 	funcMaps := getTemplateFuncMaps(branchCfg.TokenSeparators)
 
 	title := normalizeIssueTitle(issue.Title)

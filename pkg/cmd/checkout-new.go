@@ -45,6 +45,7 @@ func checkoutNew(ctx context.Context, id string, opts *CreateOptions) error {
 		return err
 	}
 
+	log.Debug("Getting issue from provider")
 	issue, err := provider.Get(ctx, id)
 	if err != nil {
 		return errors.Wrap(err, "failed to get issue")
@@ -55,6 +56,7 @@ func checkoutNew(ctx context.Context, id string, opts *CreateOptions) error {
 		return err
 	}
 
+	log.Debugf("Creating branch '%s' and checking out to it", branchName)
 	out, err := utils.Exec(ctx, "git", "checkout", "-b", branchName)
 	if err != nil {
 		return errors.Wrap(err, "Failed to create branch")
