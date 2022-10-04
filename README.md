@@ -61,3 +61,15 @@ A GitHub (`gh`) CLI extension to automate the daily work with **branches**, **co
 ## Configuration
 
 [TODO]
+
+## Questions, bug reporting and feature requests
+
+You're more than welcome to [Create a new issue](https://github.com/ilaif/gh-prx/issues/new) or contribute.
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
+
+## License
+
+gh-prx is licensed under the [MIT](https://choosealicense.com/licenses/mit/) license. For more information, please see the [LICENSE](LICENSE) file.
