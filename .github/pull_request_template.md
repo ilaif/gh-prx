@@ -1,4 +1,6 @@
-Closes {{.Issue}}.
+{{with .Issue}}Closes {{.Issue}}.
+
+{{end}}
 
 ## Description
 

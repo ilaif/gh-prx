@@ -15,11 +15,11 @@ import (
 
 const (
 	DefaultTitle = "{{.Type}}{{with .Issue}}({{.Issue}}){{end}}: {{humanize .Description}}"
-	DefaultBody  = `Closes {{.Issue}}
+	DefaultBody  = `{{with .Issue}}Closes {{.Issue}}.
 
-## Description
+{{end}}## Description
 
-{{ humanize .Description}}
+{{humanize .Description}}
 
 Change(s) in this PR:
 {{range $commit := .Commits}}

@@ -71,9 +71,9 @@ issue:
 The PR description is based on the repo's `.github/pull_request_template.md`. If this file does not exist, a default template is used:
 
    ```markdown
-   Closes {{.Issue}}.
+   {{with .Issue}}Closes {{.Issue}}.
 
-   ## Description
+   {{end}}## Description
 
    {{ humanize .Description}}
 
