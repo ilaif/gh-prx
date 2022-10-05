@@ -116,6 +116,7 @@ Special template variable names:
 * `{{.Type}}` - Used to interpret GitHub labels to add to the PR and issue type to add the branch name.
 * `{{.Issue}}` - Used as a placeholder for the issue number/code when creating a new branch.
 * `{{.Description}}` - Used as a placeholder for the issue title when creating a new branch.
+* `{{.Commits}}` - Used as a placeholder in a PR description (body) to iterate over filtered commits.
 
 ## Installation
 

@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	DefaultTitle = "{{.Type}}({{.Issue}}): {{ humanize .Description}}"
+	DefaultTitle = "{{.Type}}{{with .Issue}}({{.Issue}}){{end}}: {{humanize .Description}}"
 	DefaultBody  = `Closes {{.Issue}}
 
 ## Description
@@ -106,15 +106,15 @@ func TemplatePR(
 
 	pr := PullRequest{}
 
-	tpl := bytes.Buffer{}
-	t, err := template.New("pr-title-tpl").Funcs(funcMaps).Parse(cfg.Title)
+	res := bytes.Buffer{}
+	titleTpl, err := template.New("pr-title-tpl").Funcs(funcMaps).Parse(cfg.Title)
 	if err != nil {
 		return PullRequest{}, errors.Wrap(err, "Failed to parse pr title template")
 	}
-	if err := t.Option("missingkey=error").Execute(&tpl, b.Fields); err != nil {
+	if err := titleTpl.Option("missingkey=error").Execute(&res, b.Fields); err != nil {
 		return PullRequest{}, errors.Wrap(err, "Failed to template pr title")
 	}
-	pr.Title = tpl.String()
+	pr.Title = res.String()
 
 	if strings.Contains(cfg.Body, ".Commits") {
 		log.Debug("Fetching commits")
@@ -125,15 +125,15 @@ func TemplatePR(
 		b.Fields["Commits"] = commits
 	}
 
-	tpl = bytes.Buffer{}
-	t, err = template.New("pr-body-tpl").Funcs(funcMaps).Parse(cfg.Body)
+	res = bytes.Buffer{}
+	bodyTpl, err := template.New("pr-body-tpl").Funcs(funcMaps).Parse(cfg.Body)
 	if err != nil {
 		return PullRequest{}, errors.Wrap(err, "Failed to parse pr body template")
 	}
-	if err := t.Option("missingkey=error").Execute(&tpl, b.Fields); err != nil {
+	if err := bodyTpl.Option("missingkey=error").Execute(&res, b.Fields); err != nil {
 		return PullRequest{}, errors.Wrap(err, "Failed to template pr body")
 	}
-	pr.Body = tpl.String()
+	pr.Body = res.String()
 
 	if *cfg.AnswerChecklist {
 		body, err := answerPRChecklist(pr.Body, confirm)

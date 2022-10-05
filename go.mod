@@ -12,6 +12,7 @@ require (
 	github.com/samber/lo v1.29.0
 	github.com/spf13/cobra v1.5.0
 	github.com/stretchr/testify v1.8.0
+	golang.org/x/sync v0.0.0-20220929204114-8fcdb60fdcc0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

@@ -55,9 +55,9 @@ func checkoutNew(ctx context.Context, id string, opts *CreateOptions) error {
 		return err
 	}
 
-	stopSpinner := utils.StartSpinner("Fetching issue from provider...", "Fetched issue from provider")
+	s := utils.StartSpinner("Fetching issue from provider...", "Fetched issue from provider")
 	issue, err := provider.Get(ctx, id)
-	stopSpinner()
+	s.Stop()
 	if err != nil {
 		return errors.Wrap(err, "failed to get issue")
 	}

@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	DefaultBranchTemplate = "{{.Type}}/{{.Issue}}-{{.Description}}"
+	DefaultBranchTemplate = "{{.Type}}/({{.Issue}}-)?{{.Description}}"
 )
 
 var (

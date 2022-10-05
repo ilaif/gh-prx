@@ -7,7 +7,7 @@ import (
 	"github.com/briandowns/spinner"
 )
 
-func StartSpinner(loadingMsg string, finalMsg string) func() {
+func StartSpinner(loadingMsg string, finalMsg string) *spinner.Spinner {
 	s := spinner.New(spinner.CharSets[57], 100*time.Millisecond)
 	_ = s.Color("red")
 	s.Suffix = fmt.Sprintf(" %s", loadingMsg)
@@ -15,5 +15,5 @@ func StartSpinner(loadingMsg string, finalMsg string) func() {
 
 	s.Start()
 
-	return s.Stop
+	return s
 }

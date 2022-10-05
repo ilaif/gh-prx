@@ -9,6 +9,7 @@ import (
 	"github.com/cli/go-gh"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/ilaif/gh-prx/pkg"
 	"github.com/ilaif/gh-prx/pkg/utils"
@@ -112,9 +113,9 @@ func create(ctx context.Context, opts *CreateOptions) error {
 	}
 
 	if *cfg.PR.PushToRemote {
-		stopSpinner := utils.StartSpinner("Pushing current branch to remote...", "Pushed branch to remote")
+		s := utils.StartSpinner("Pushing current branch to remote...", "Pushed branch to remote")
 		out, err = utils.Exec(ctx, "git", "push", "--set-upstream", "origin", b.Original)
-		stopSpinner()
+		s.Stop()
 		if err != nil {
 			return err
 		}
@@ -123,9 +124,9 @@ func create(ctx context.Context, opts *CreateOptions) error {
 
 	base := opts.BaseBranch
 	if base == "" {
-		stopSpinner := utils.StartSpinner("Fetching repository default branch...", "Fetched repository default branch")
+		s := utils.StartSpinner("Fetching repository default branch...", "Fetched repository default branch")
 		stdOut, _, err := gh.Exec("repo", "view", "--json", "defaultBranchRef", "--jq", ".defaultBranchRef.name")
-		stopSpinner()
+		s.Stop()
 		if err != nil {
 			return errors.Wrap(err, "Failed to fetch default branch")
 		}
@@ -151,15 +152,50 @@ func create(ctx context.Context, opts *CreateOptions) error {
 		return err
 	}
 
-	stopSpinner := utils.StartSpinner("Creating pull request...", "Created pull request")
+	if len(pr.Labels) > 0 {
+		if err := createLabels(pr.Labels); err != nil {
+			return err
+		}
+	}
+
+	s := utils.StartSpinner("Creating pull request...", "Created pull request")
 	args := []string{"pr", "create", "--title", pr.Title, "--body", pr.Body, "--base", base}
 	args = append(args, generatePrCreateArgsFromOpts(opts, pr.Labels)...)
 	stdOut, _, err := gh.Exec(args...)
-	stopSpinner()
+	s.Stop()
 	if err != nil {
 		return errors.Wrap(err, "Failed to create pull request")
 	}
 	log.Info(strings.Trim(stdOut.String(), "\n"))
+
+	return nil
+}
+
+func createLabels(labels []string) error {
+	s := utils.StartSpinner("Creating labels (if not exist)...", "Created labels")
+	defer s.Stop()
+
+	g := errgroup.Group{}
+	for _, label := range labels {
+		label := label
+
+		g.Go(func() error {
+			_, stdErr, err := gh.Exec("label", "create", label)
+			if err != nil {
+				if !strings.Contains(stdErr.String(), "already exists") {
+					return errors.Wrapf(err, "Failed to create label '%s'", label)
+				}
+
+				return nil
+			}
+
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return errors.Wrap(err, "Failed to create labels")
+	}
 
 	return nil
 }
