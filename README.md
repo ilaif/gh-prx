@@ -83,13 +83,13 @@ The PR description is based on the repo's `.github/pull_request_template.md`. If
    - [ ] Documentation is changed or added
    ```
 
-### Templating
+## Templating
 
 The templates are based on [Go text template](https://pkg.go.dev/text/template).
 
-Additional template functions:
+### Additional template functions
 
-#### `humanize`
+`humanize`:
 
 Humanizes a string by separating it into tokens (words) based on `branch.token_separators`.
 
@@ -111,7 +111,7 @@ Result:
 This is "my dashed string"
 ```
 
-Special template variable names:
+### Special template variable names
 
 * `{{.Type}}` - Used to interpret GitHub labels to add to the PR and issue type to add the branch name.
 * `{{.Issue}}` - Used as a placeholder for the issue number/code when creating a new branch.
