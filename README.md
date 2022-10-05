@@ -51,20 +51,20 @@ The default values for `.gh-prx.yaml` are:
 
 ```yaml
 branch:
-   template: "{{.Type}}/{{with .Issue}}{{.}}-{{end}}{{.Description}}"         # Branch name template
-   pattern: "{{.Type}}\/({{.Issue}}-)?{{.Description}}"                       # Branch name pattern
-   variable_patterns:                                                         # A map of patterns to match for each template variable
+   template: "{{.Type}}/{{with .Issue}}{{.}}-{{end}}{{.Description}}" # Branch name template
+   pattern: "{{.Type}}\/({{.Issue}}-)?{{.Description}}" # Branch name pattern
+   variable_patterns: # A map of patterns to match for each template variable
       Type: "fix|feat|chore|docs|refactor|test|style|build|ci|perf|revert"
       Issue: "[0-9]+"
       Description: ".*"
-   token_separators: ["-", "_"]                                               # Characters used to separate branch name into a human-readable string
+   token_separators: ["-", "_"] # Characters used to separate branch name into a human-readable string
 pr:
    title: "{{.Type}}{{with .Issue}}({{.}}){{end}}: {{humanize .Description}}" # PR title template
-   ignore_commits_patterns: ["^wip"]                                          # Patterns to filter out a commits from the {{.Commits}} variable
-   answer_checklist: true                                                     # Whether to prompt the user to answer PR description checklists. Possible answers: yes, no, skip (remove the item)
-   push_to_remote: true                                                       # Whether to push the local changes to remote before creating the PR
+   ignore_commits_patterns: ["^wip"] # Patterns to filter out a commits from the {{.Commits}} variable
+   answer_checklist: true # Whether to prompt the user to answer PR description checklists. Possible answers: yes, no, skip (remove the item)
+   push_to_remote: true # Whether to push the local changes to remote before creating the PR
 issue:
-   provider: github                                                           # The provider to use for fetching issue details
+   provider: github # The provider to use for fetching issue details
 ```
 
 ### PR Description (Body)
