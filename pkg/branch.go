@@ -15,19 +15,34 @@ import (
 )
 
 const (
-	DefaultBranchTemplate = "{{.Type}}/({{.Issue}}-)?{{.Description}}"
+	DefaultBranchTemplate = "{{.Type}}/{{with .Issue}}{{.}}-{{end}}{{.Description}}"
+	DefaultBranchPattern  = `{{.Type}}\/({{.Issue}}-)?{{.Description}}`
 )
 
 var (
 	DefaultIssueTypes = []string{
 		"fix", "feat", "chore", "docs", "refactor", "test", "style", "build", "ci", "perf", "revert",
 	}
-	DefaultPatterns = map[string]string{
-		"Type":        "fix|feat|chore|docs|refactor|test|style|build|ci|perf|revert",
-		"Issue":       "#[0-9]+",
-		"Description": ".*",
+	VariablePatterns = map[string]string{
+		"Type":        `fix|feat|chore|docs|refactor|test|style|build|ci|perf|revert`,
+		"Issue":       `[0-9]+`,
+		"Description": `.*`,
 	}
 	DefaultTokenSeparators = []string{"-", "_"}
+	LabelToType            = map[string]string{
+		"bug":           "fix",
+		"enhancement":   "feat",
+		"documentation": "docs",
+
+		"chore":    "chore",
+		"refactor": "refactor",
+		"test":     "test",
+		"ci":       "ci",
+		"perf":     "perf",
+		"build":    "build",
+		"revert":   "revert",
+		"style":    "style",
+	}
 )
 
 type BranchConfig struct {
@@ -43,6 +58,12 @@ type BranchConfig struct {
 	// - PROJ-1234-some-new-features
 	Template string `yaml:"template"`
 
+	// The pattern that should be used to validate the branch name and extract variables.
+	//
+	// Example: {{.Type}}\/({{.Issue}}-)?{{.Description}}
+	// Where the variables are defined in the `variable_patterns` field.
+	Pattern string `yaml:"pattern"`
+
 	// The patterns that should be fetched from the branch name.
 	//
 	// Example:
@@ -50,7 +71,7 @@ type BranchConfig struct {
 	//   "Author": "([a-z0-9]+)"
 	//   "Description": "(.*)"
 	//   "Type": "(fix|feat|chore|docs|refactor|test|style|build|ci|perf|revert)"
-	Patterns map[string]string `yaml:"patterns"`
+	VariablePatterns map[string]string `yaml:"variable_patterns"`
 
 	TokenSeparators []string `yaml:"token_separators"`
 }
@@ -60,8 +81,12 @@ func (c *BranchConfig) SetDefaults() {
 		c.Template = DefaultBranchTemplate
 	}
 
-	if c.Patterns == nil {
-		c.Patterns = DefaultPatterns
+	if c.Pattern == "" {
+		c.Pattern = DefaultBranchPattern
+	}
+
+	if c.VariablePatterns == nil {
+		c.VariablePatterns = VariablePatterns
 	}
 
 	if len(c.TokenSeparators) == 0 {
@@ -88,8 +113,8 @@ type Branch struct {
 func ParseBranch(name string, cfg BranchConfig) (Branch, error) {
 	log.Debugf("Parsing branch name '%s'", name)
 
-	branchPattern := cfg.Template
-	for placeholder, pattern := range cfg.Patterns {
+	branchPattern := cfg.Pattern
+	for placeholder, pattern := range cfg.VariablePatterns {
 		namedGroupPattern := fmt.Sprintf("(?P<%s>%s)", placeholder, pattern)
 		branchPattern = strings.ReplaceAll(branchPattern, fmt.Sprintf("{{.%s}}", placeholder), namedGroupPattern)
 	}

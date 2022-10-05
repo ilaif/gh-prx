@@ -14,41 +14,41 @@ func Test_ParseBranch(t *testing.T) {
 		err      bool
 	}{
 		{
-			name:   "fix/#1234-fix-thing",
+			name:   "fix/1234-fix-thing",
 			config: BranchConfig{},
 			expected: Branch{
-				Fields:   map[string]any{"Type": "fix", "Issue": "#1234", "Description": "fix-thing"},
-				Original: "fix/#1234-fix-thing",
+				Fields:   map[string]any{"Type": "fix", "Issue": "1234", "Description": "fix-thing"},
+				Original: "fix/1234-fix-thing",
 			},
 		},
 		{
-			name:   "feat/#1234-add-foo",
+			name:   "feat/1234-add-foo",
 			config: BranchConfig{},
 			expected: Branch{
-				Fields:   map[string]any{"Type": "feat", "Issue": "#1234", "Description": "add-foo"},
-				Original: "feat/#1234-add-foo",
+				Fields:   map[string]any{"Type": "feat", "Issue": "1234", "Description": "add-foo"},
+				Original: "feat/1234-add-foo",
 			},
 		},
 		{
-			name:   "chore-#1234-update-deps",
-			config: BranchConfig{Template: "{{.Type}}-{{.Issue}}-{{.Description}}"},
+			name:   "chore-1234-update-deps",
+			config: BranchConfig{Pattern: "{{.Type}}-{{.Issue}}-{{.Description}}"},
 			expected: Branch{
-				Fields:   map[string]any{"Type": "chore", "Issue": "#1234", "Description": "update-deps"},
-				Original: "chore-#1234-update-deps",
+				Fields:   map[string]any{"Type": "chore", "Issue": "1234", "Description": "update-deps"},
+				Original: "chore-1234-update-deps",
 			},
 		},
 		{
-			name:     "bug-name-#1234-fix-thing",
-			config:   BranchConfig{Template: "{{.Type}}-{{.Author}}-{{.Issue}}-{{.Description}}"},
+			name:     "bug-name-1234-fix-thing",
+			config:   BranchConfig{Pattern: "{{.Type}}-{{.Author}}-{{.Issue}}-{{.Description}}"},
 			expected: Branch{},
 			err:      true,
 		},
 		{
-			name:   "#1234-some-new-features",
-			config: BranchConfig{Template: "{{.Issue}}-{{.Description}}"},
+			name:   "1234-some-new-features",
+			config: BranchConfig{Pattern: "{{.Issue}}-{{.Description}}"},
 			expected: Branch{
-				Fields:   map[string]any{"Issue": "#1234", "Description": "some-new-features"},
-				Original: "#1234-some-new-features",
+				Fields:   map[string]any{"Issue": "1234", "Description": "some-new-features"},
+				Original: "1234-some-new-features",
 			},
 		},
 	}

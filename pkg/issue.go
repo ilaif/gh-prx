@@ -47,16 +47,20 @@ type IssueProvider interface {
 }
 
 type GitHubIssue struct {
-	Number int      `json:"number"`
-	Title  string   `json:"title"`
-	Labels []string `json:"labels"`
+	Number int           `json:"number"`
+	Title  string        `json:"title"`
+	Labels []GitHubLabel `json:"labels"`
+}
+
+type GitHubLabel struct {
+	Name string `json:"name"`
 }
 
 func (i *GitHubIssue) ToIssue() *Issue {
 	return &Issue{
 		Code:   fmt.Sprintf("%d", i.Number),
 		Title:  i.Title,
-		Labels: i.Labels,
+		Labels: lo.Map(i.Labels, func(l GitHubLabel, _ int) string { return l.Name }),
 	}
 }
 
@@ -64,7 +68,7 @@ type GitHubIssueProvider struct {
 }
 
 func (p *GitHubIssueProvider) Get(ctx context.Context, id string) (*Issue, error) {
-	stdOut, _, err := gh.Exec("issue", "view", id, "--json", "number,title")
+	stdOut, _, err := gh.Exec("issue", "view", id, "--json", "number,title,labels")
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to get GitHub issue")
 	}
@@ -89,6 +93,7 @@ func NewIssueProvider(provider string) (IssueProvider, error) {
 func normalizeIssueTitle(title string) string {
 	title = InvalidTitleCharsMatcher.ReplaceAllString(title, "-")
 	title = strings.ToLower(title)
+	title = strings.Trim(title, "-")
 
 	return title
 }
