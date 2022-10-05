@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/caarlos0/log"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -19,9 +20,18 @@ func newCheckoutNewCmd() *cobra.Command {
 	opts := &CreateOptions{}
 
 	cmd := &cobra.Command{
-		Use:     "checkout-new <issue-id>",
-		Short:   "Create a new branch based on an issue and checkout to it.",
-		Args:    cobra.ExactArgs(1),
+		Use:   "checkout-new <issue-id>",
+		Short: "Create a new branch based on an issue and checkout to it.",
+		Args:  cobra.ExactArgs(1),
+		Long: heredoc.Docf(`
+			Create a new branch based on an issue and checkout to it.
+
+			If the issue type ({{.Type}}) can't be resolved from the labels automatically,
+			the user will be prompted to choose a type.
+		`, "`"),
+		Example: heredoc.Doc(`
+			$ gh prx checkout-new 1234 # Where 1234 is the issue number
+		`),
 		Aliases: []string{"switch-create", "sc", "cob"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
@@ -45,8 +55,9 @@ func checkoutNew(ctx context.Context, id string, opts *CreateOptions) error {
 		return err
 	}
 
-	log.Debug("Getting issue from provider")
+	s := utils.StartSpinner("Fetching issue from provider...", "Fetched issue from provider")
 	issue, err := provider.Get(ctx, id)
+	s.Stop()
 	if err != nil {
 		return errors.Wrap(err, "failed to get issue")
 	}

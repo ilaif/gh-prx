@@ -17,19 +17,12 @@ type Config struct {
 	Branch BranchConfig      `yaml:"branch"`
 	PR     PullRequestConfig `yaml:"pr"`
 	Issue  IssueConfig       `yaml:"issue"`
-
-	PushToRemote *bool `yaml:"push_to_remote"`
 }
 
 func (c *Config) SetDefaults() {
 	c.Branch.SetDefaults()
 	c.PR.SetDefaults()
 	c.Issue.SetDefaults()
-
-	if c.PushToRemote == nil {
-		trueVal := true
-		c.PushToRemote = &trueVal
-	}
 }
 
 func (c *Config) Validate() error {

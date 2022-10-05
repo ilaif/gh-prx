@@ -21,4 +21,7 @@ testwatch: ## Run unit tests in watch mode, re-running tests on each file change
 	gotestsum --watch --format pkgname -- -short ./...
 
 build: ## Build the binary
-	go build ./cmd/gh-prx
+	go build ./
+
+install-extension: ## Installs the extension locally
+	gh extension install .

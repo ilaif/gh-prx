@@ -1,8 +1,10 @@
-Closes {{.Issue}}.
+{{with .Issue}}Closes {{.Issue}}.
+
+{{end}}
 
 ## Description
 
-{{ toSentence .Description}}
+{{ humanize .Description}}
 
 ## PR Checklist
 

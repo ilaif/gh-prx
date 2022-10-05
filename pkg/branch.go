@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	DefaultBranchTemplate = "{{.Type}}/{{.Issue}}-{{.Description}}"
+	DefaultBranchTemplate = "{{.Type}}/({{.Issue}}-)?{{.Description}}"
 )
 
 var (
@@ -23,9 +23,7 @@ var (
 		"fix", "feat", "chore", "docs", "refactor", "test", "style", "build", "ci", "perf", "revert",
 	}
 	DefaultPatterns = map[string]string{
-		"Type": "fix|feat|chore|docs|refactor|test|style|build|ci|perf|revert",
-		// "Author":      "[a-z0-9]+",
-		// "Issue":       "[A-Z]+\\-[0-9]+",
+		"Type":        "fix|feat|chore|docs|refactor|test|style|build|ci|perf|revert",
 		"Issue":       "#[0-9]+",
 		"Description": ".*",
 	}
@@ -33,15 +31,6 @@ var (
 )
 
 type BranchConfig struct {
-	// The patterns that should be fetched from the branch name.
-	//
-	// Example:
-	//   "Issue": "([A-Z]+\\-[0-9]+)"
-	//   "Author": "([a-z0-9]+)"
-	//   "Description": "(.*)"
-	//   "Type": "(fix|feat|chore|docs|refactor|test|style|build|ci|perf|revert)"
-	Patterns map[string]string `yaml:"patterns"`
-
 	// The template structure of your branch names.
 	// Example pattern:
 	// {{.Type}}/{{.Author}}-{{.Issue}}-{{.Description}}
@@ -53,6 +42,15 @@ type BranchConfig struct {
 	// - bug-name-PROJ-1234-fix-thing
 	// - PROJ-1234-some-new-features
 	Template string `yaml:"template"`
+
+	// The patterns that should be fetched from the branch name.
+	//
+	// Example:
+	//   "Issue": "([A-Z]+\\-[0-9]+)"
+	//   "Author": "([a-z0-9]+)"
+	//   "Description": "(.*)"
+	//   "Type": "(fix|feat|chore|docs|refactor|test|style|build|ci|perf|revert)"
+	Patterns map[string]string `yaml:"patterns"`
 
 	TokenSeparators []string `yaml:"token_separators"`
 }
@@ -122,9 +120,10 @@ func ParseBranch(name string, cfg BranchConfig) (Branch, error) {
 func TemplateBranchName(branchCfg BranchConfig, issue *Issue) (string, error) {
 	log.Debug("Templating branch name")
 
-	funcMaps := getTemplateFuncMaps(branchCfg.TokenSeparators)
-
-	title := normalizeIssueTitle(issue.Title)
+	funcMaps, err := generateTemplateFunctions(branchCfg.TokenSeparators)
+	if err != nil {
+		return "", errors.Wrap(err, "Failed to generate template functions")
+	}
 
 	tpl := bytes.Buffer{}
 	t, err := template.New("branch-name-tpl").Funcs(funcMaps).Parse(branchCfg.Template)
@@ -132,6 +131,25 @@ func TemplateBranchName(branchCfg BranchConfig, issue *Issue) (string, error) {
 		return "", errors.Wrap(err, "Failed to parse branch name template")
 	}
 
+	issueType, err := resolveIssueType(issue)
+	if err != nil {
+		return "", errors.Wrap(err, "Failed to resolve issue type")
+	}
+
+	if err := t.Execute(&tpl, map[string]interface{}{
+		"Type":        issueType,
+		"Issue":       issue.Code,
+		"Description": normalizeIssueTitle(issue.Title),
+	}); err != nil {
+		return "", errors.Wrap(err, "Failed to template branch name")
+	}
+
+	name := normalizeBranchName(tpl.String(), branchCfg.TokenSeparators)
+
+	return name, nil
+}
+
+func resolveIssueType(issue *Issue) (string, error) {
 	issueType := ""
 	for _, label := range issue.Labels {
 		if it, ok := LabelToType[label]; ok {
@@ -152,17 +170,7 @@ func TemplateBranchName(branchCfg BranchConfig, issue *Issue) (string, error) {
 		}
 	}
 
-	if err := t.Execute(&tpl, map[string]interface{}{
-		"Type":        issueType,
-		"Issue":       issue.Code,
-		"Description": title,
-	}); err != nil {
-		return "", errors.Wrap(err, "Failed to template branch name")
-	}
-
-	name := normalizeBranchName(tpl.String(), branchCfg.TokenSeparators)
-
-	return name, nil
+	return issueType, nil
 }
 
 func normalizeBranchName(name string, tokenSeparators []string) string {
