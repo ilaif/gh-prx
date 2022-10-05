@@ -2,7 +2,7 @@ Closes {{.Issue}}.
 
 ## Description
 
-{{ toSentence .Description}}
+{{ humanize .Description}}
 
 ## PR Checklist
 

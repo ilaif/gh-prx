@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/caarlos0/log"
 	"github.com/cli/go-gh"
 	"github.com/pkg/errors"
@@ -36,7 +37,25 @@ func newCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a pull request on GitHub, extended.",
-		Args:  cobra.NoArgs,
+		Long: heredoc.Docf(`
+			Create a pull request on GitHub, extended.
+
+			When the current branch isn't fully pushed to a git remote, the command will push it to origin.
+			This behavior can be disabled by setting %[1]spr.push_to_remote: false%[1]s in the config file.
+
+			A pull request title will be generated based on the current branch name and the config file (if present).
+
+			A pull request description (body) template can be defined in %[1]s.github/.pull_request_template.md%[1]s.
+
+			All of %[1]sgh pr create%[1]s flags are supported.
+		`, "`"),
+		Example: heredoc.Doc(`
+			$ gh prx create # Good defaults
+			$ gh prx create --web # Open the pull request in the browser before creating it
+			$ gh prx create --confirm # skip confirmation prompt for PR checklist questions
+		`),
+		Aliases: []string{"new"},
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
@@ -92,20 +111,21 @@ func create(ctx context.Context, opts *CreateOptions) error {
 		return err
 	}
 
-	if *cfg.PushToRemote {
-		log.Info("Pushing branch to remote")
+	if *cfg.PR.PushToRemote {
+		stopSpinner := utils.StartSpinner("Pushing current branch to remote...", "Pushed branch to remote")
 		out, err = utils.Exec(ctx, "git", "push", "--set-upstream", "origin", b.Original)
+		stopSpinner()
 		if err != nil {
 			return err
 		}
-		log.IncreasePadding()
 		log.Info(strings.Trim(out, "\n"))
-		log.DecreasePadding()
 	}
 
 	base := opts.BaseBranch
 	if base == "" {
+		stopSpinner := utils.StartSpinner("Fetching repository default branch...", "Fetched repository default branch")
 		stdOut, _, err := gh.Exec("repo", "view", "--json", "defaultBranchRef", "--jq", ".defaultBranchRef.name")
+		stopSpinner()
 		if err != nil {
 			return errors.Wrap(err, "Failed to fetch default branch")
 		}
@@ -131,9 +151,11 @@ func create(ctx context.Context, opts *CreateOptions) error {
 		return err
 	}
 
+	stopSpinner := utils.StartSpinner("Creating pull request...", "Created pull request")
 	args := []string{"pr", "create", "--title", pr.Title, "--body", pr.Body, "--base", base}
 	args = append(args, generatePrCreateArgsFromOpts(opts, pr.Labels)...)
 	stdOut, _, err := gh.Exec(args...)
+	stopSpinner()
 	if err != nil {
 		return errors.Wrap(err, "Failed to create pull request")
 	}

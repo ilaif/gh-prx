@@ -14,12 +14,12 @@ import (
 )
 
 const (
-	DefaultTitle = "{{.Type}}({{.Issue}}): {{ toSentence .Description}}"
+	DefaultTitle = "{{.Type}}({{.Issue}}): {{ humanize .Description}}"
 	DefaultBody  = `Closes {{.Issue}}
 
 ## Description
 
-{{ toSentence .Description}}
+{{ humanize .Description}}
 
 Change(s) in this PR:
 {{range $commit := .Commits}}
@@ -55,6 +55,7 @@ type PullRequestConfig struct {
 	Title                 string   `yaml:"title"`
 	IgnoreCommitsPatterns []string `yaml:"ignore_commits_patterns"`
 	AnswerChecklist       *bool    `yaml:"answer_checklist"`
+	PushToRemote          *bool    `yaml:"push_to_remote"`
 
 	Body string `yaml:"-"`
 }
@@ -76,6 +77,11 @@ func (c *PullRequestConfig) SetDefaults() {
 		trueVal := true
 		c.AnswerChecklist = &trueVal
 	}
+
+	if c.PushToRemote == nil {
+		trueVal := true
+		c.PushToRemote = &trueVal
+	}
 }
 
 type PullRequest struct {
@@ -92,11 +98,13 @@ func TemplatePR(
 	commitsFetcher CommitsFetcher,
 ) (PullRequest, error) {
 	log.Debug("Templating PR")
-	log.IncreasePadding()
-	defer log.DecreasePadding()
+
+	funcMaps, err := generateTemplateFunctions(tokenSeparators)
+	if err != nil {
+		return PullRequest{}, errors.Wrap(err, "Failed to generate template functions")
+	}
 
 	pr := PullRequest{}
-	funcMaps := getTemplateFuncMaps(tokenSeparators)
 
 	tpl := bytes.Buffer{}
 	t, err := template.New("pr-title-tpl").Funcs(funcMaps).Parse(cfg.Title)
@@ -149,17 +157,18 @@ func TemplatePR(
 	return pr, nil
 }
 
-func getTemplateFuncMaps(tokenSeparators []string) template.FuncMap {
-	return template.FuncMap{
-		"toSentence": func(text string) (string, error) {
-			tokenMatcher, err := regexp.Compile(fmt.Sprintf("[%s]", strings.Join(tokenSeparators, "")))
-			if err != nil {
-				return "", errors.Wrap(err, "Failed to compile toSentence token matcher")
-			}
+func generateTemplateFunctions(tokenSeparators []string) (template.FuncMap, error) {
+	tokenSeparators = lo.Map(tokenSeparators, func(t string, _ int) string { return fmt.Sprintf("\\%s", t) })
+	tokenMatcher, err := regexp.Compile(fmt.Sprintf("[%s]", strings.Join(tokenSeparators, "")))
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to compile humanize token matcher")
+	}
 
+	return template.FuncMap{
+		"humanize": func(text string) (string, error) {
 			return tokenMatcher.ReplaceAllString(text, " "), nil
 		},
-	}
+	}, nil
 }
 
 func fetchCommits(ignoreCommitsPatterns []string, commitsFetcher CommitsFetcher) ([]string, error) {
