@@ -46,7 +46,8 @@ var (
 		"documentation": "docs",
 	}
 
-	mdCheckboxMatcher = regexp.MustCompile(`^\s*[\-\*]\s*\[(x|\s)\]`)
+	mdCheckboxMatcher         = regexp.MustCompile(`^\s*[\-\*]\s*\[(x|\s)\]`)
+	commitMsgSeparatorMatcher = regexp.MustCompile(`[\*\-]`)
 )
 
 type CommitsFetcher func() ([]string, error)
@@ -182,11 +183,16 @@ func fetchCommits(ignoreCommitsPatterns []string, commitsFetcher CommitsFetcher)
 		return nil, errors.Wrap(err, "Failed to compile ignore commits matcher")
 	}
 
-	commits = lo.Filter(commits, func(commit string, _ int) bool {
-		return !ignoreCommitsMatcher.MatchString(commit)
+	splitCommits := []string{}
+	for _, commit := range commits {
+		splitCommits = append(splitCommits, commitMsgSeparatorMatcher.Split(commit, -1)...)
+	}
+
+	splitCommits = lo.Filter(splitCommits, func(commit string, _ int) bool {
+		return !ignoreCommitsMatcher.MatchString(commit) && commit != ""
 	})
 
-	return lo.Reverse(commits), nil
+	return lo.Reverse(splitCommits), nil
 }
 
 func answerPRChecklist(body string, confirm bool) (string, error) {
