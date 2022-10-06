@@ -14,11 +14,15 @@ A GitHub (`gh`) CLI extension to automate the daily work with **branches**, **co
     gh prx checkout-new 1234 # Where 1234 is the issue's number/code
     ```
 
+   <img src="https://github.com/ilaif/gh-prx/raw/main/assets/gh-prx-checkout-new.gif" width="700">
+
 2. Creating a new PR with automatically generated title/body and checklist prompt:
 
     ```sh
     gh prx create
     ```
+
+   <img src="https://github.com/ilaif/gh-prx/raw/main/assets/gh-prx-create.gif" width="700">
 
 > Explore further by running `gh prx --help`
 
@@ -51,15 +55,16 @@ The default values for `.gh-prx.yaml` are:
 
 ```yaml
 branch:
-   template: "{{.Type}}/{{.Issue}}-{{.Description}}" # Branch name template
-   patterns: # A map of patterns to match for each template variable
+   template: "{{.Type}}/{{with .Issue}}{{.}}-{{end}}{{.Description}}" # Branch name template
+   pattern: "{{.Type}}\/({{.Issue}}-)?{{.Description}}" # Branch name pattern
+   variable_patterns: # A map of patterns to match for each template variable
       Type: "fix|feat|chore|docs|refactor|test|style|build|ci|perf|revert"
-      Issue: "#[0-9]+"
+      Issue: "[0-9]+"
       Description: ".*"
    token_separators: ["-", "_"] # Characters used to separate branch name into a human-readable string
 pr:
-   title: "{{.Type}}({{.Issue}}): {{ humanize .Description}}" # PR title template
-   ignore_commits_patterns: ["^wip"] # Patterns that when matched, filters out a commit message from the {{.Commits}} variable
+   title: "{{.Type}}{{with .Issue}}({{.}}){{end}}: {{humanize .Description}}" # PR title template
+   ignore_commits_patterns: ["^wip"] # Patterns to filter out a commits from the {{.Commits}} variable
    answer_checklist: true # Whether to prompt the user to answer PR description checklists. Possible answers: yes, no, skip (remove the item)
    push_to_remote: true # Whether to push the local changes to remote before creating the PR
 issue:
@@ -71,7 +76,7 @@ issue:
 The PR description is based on the repo's `.github/pull_request_template.md`. If this file does not exist, a default template is used:
 
    ```markdown
-   {{with .Issue}}Closes {{.Issue}}.
+   {{with .Issue}}Closes #{{.}}.
 
    {{end}}## Description
 

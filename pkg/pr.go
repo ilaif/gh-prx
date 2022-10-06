@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	DefaultTitle = "{{.Type}}{{with .Issue}}({{.Issue}}){{end}}: {{humanize .Description}}"
-	DefaultBody  = `{{with .Issue}}Closes {{.Issue}}.
+	DefaultTitle = "{{.Type}}{{with .Issue}}({{.}}){{end}}: {{humanize .Description}}"
+	DefaultBody  = `{{with .Issue}}Closes #{{.}}.
 
 {{end}}## Description
 
@@ -39,11 +39,6 @@ var (
 		"fix":  "bug",
 		"feat": "enhancement",
 		"docs": "documentation",
-	}
-	LabelToType = map[string]string{
-		"bug":           "fix",
-		"enhancement":   "feat",
-		"documentation": "docs",
 	}
 
 	mdCheckboxMatcher         = regexp.MustCompile(`^\s*[\-\*]\s*\[(x|\s)\]`)
