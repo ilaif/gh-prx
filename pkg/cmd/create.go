@@ -11,11 +11,13 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/ilaif/gh-prx/pkg"
+	"github.com/ilaif/gh-prx/pkg/branch"
+	"github.com/ilaif/gh-prx/pkg/config"
+	"github.com/ilaif/gh-prx/pkg/pr"
 	"github.com/ilaif/gh-prx/pkg/utils"
 )
 
-type CreateOptions struct {
+type CreateOpts struct {
 	Confirm bool
 
 	WebMode     bool
@@ -32,8 +34,8 @@ type CreateOptions struct {
 	Milestone string
 }
 
-func newCreateCmd() *cobra.Command {
-	opts := &CreateOptions{}
+func NewCreateCmd() *cobra.Command {
+	opts := &CreateOpts{}
 
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -93,9 +95,9 @@ func newCreateCmd() *cobra.Command {
 	return cmd
 }
 
-func create(ctx context.Context, opts *CreateOptions) error {
+func create(ctx context.Context, opts *CreateOpts) error {
 	log.Debug("Loading config")
-	cfg, err := pkg.LoadConfig()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
 	}
@@ -107,7 +109,7 @@ func create(ctx context.Context, opts *CreateOptions) error {
 	}
 	branchName := strings.Trim(out, "\n")
 
-	b, err := pkg.ParseBranch(branchName, cfg.Branch)
+	b, err := branch.ParseBranch(branchName, cfg.Branch)
 	if err != nil {
 		return err
 	}
@@ -147,7 +149,7 @@ func create(ctx context.Context, opts *CreateOptions) error {
 		return strings.Split(out, "\n"), nil
 	}
 
-	pr, err := pkg.TemplatePR(b, cfg.PR, opts.Confirm, cfg.Branch.TokenSeparators, commitsFetcher)
+	pr, err := pr.TemplatePR(b, cfg.PR, opts.Confirm, cfg.Branch.TokenSeparators, commitsFetcher)
 	if err != nil {
 		return err
 	}
@@ -200,7 +202,7 @@ func createLabels(labels []string) error {
 	return nil
 }
 
-func generatePrCreateArgsFromOpts(opts *CreateOptions, labels []string) []string {
+func generatePrCreateArgsFromOpts(opts *CreateOpts, labels []string) []string {
 	args := []string{}
 
 	if len(opts.Assignees) > 0 {

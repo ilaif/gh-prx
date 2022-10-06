@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -23,23 +22,36 @@ func ReadFile(filename string) ([]byte, error) {
 	return buf, nil
 }
 
-func WriteStringToFile(filename string, text string) error {
-	if err := os.WriteFile(filename, []byte(text), fs.FileMode(os.O_WRONLY)); err != nil {
+func WriteFile(filename string, content []byte) error {
+	if err := os.WriteFile(filename, content, 0600); err != nil {
 		return errors.Wrapf(err, "Failed to write to file '%s'", filename)
 	}
 
 	return nil
 }
 
-func ReadYaml(filename string, config interface{}) error {
+func ReadYaml(filename string, data interface{}) error {
 	buf, err := ReadFile(filename)
 	if err != nil {
 		return err
 	}
 
-	err = yaml.Unmarshal(buf, config)
+	err = yaml.Unmarshal(buf, data)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to parse config from '%s'", filename)
+	}
+
+	return nil
+}
+
+func WriteYaml(filename string, data interface{}) error {
+	out, err := yaml.Marshal(data)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to marshal data to yaml")
+	}
+
+	if err := WriteFile(filename, out); err != nil {
+		return errors.Wrapf(err, "Failed to write yaml to '%s'", filename)
 	}
 
 	return nil

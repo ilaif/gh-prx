@@ -11,7 +11,7 @@ A GitHub (`gh`) CLI extension to automate the daily work with **branches**, **co
 1. Checking out to an automatically generated branch:
 
     ```sh
-    gh prx checkout-new 1234 # Where 1234 is the issue's number/code
+    gh prx checkout-new 1234 # Where 1234 is the issue's key
     ```
 
    <img src="https://github.com/ilaif/gh-prx/raw/main/assets/gh-prx-checkout-new.gif" width="700">
@@ -69,6 +69,7 @@ pr:
    push_to_remote: true # Whether to push the local changes to remote before creating the PR
 issue:
    provider: github # The provider to use for fetching issue details
+   types: ["fix", "feat", "chore", "docs", "refactor", "test", "style", "build", "ci", "perf", "revert"] # The issue types to prompt the user when creating a new branch
 ```
 
 ### PR Description (Body)
@@ -119,7 +120,7 @@ This is "my dashed string"
 ### Special template variable names
 
 * `{{.Type}}` - Used to interpret GitHub labels to add to the PR and issue type to add the branch name.
-* `{{.Issue}}` - Used as a placeholder for the issue number/code when creating a new branch.
+* `{{.Issue}}` - Used as a placeholder for the issue key when creating a new branch.
 * `{{.Description}}` - Used as a placeholder for the issue title when creating a new branch.
 * `{{.Commits}}` - Used as a placeholder in a PR description (body) to iterate over filtered commits.
 
