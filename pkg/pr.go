@@ -15,7 +15,7 @@ import (
 
 const (
 	DefaultTitle = "{{.Type}}{{with .Issue}}({{.}}){{end}}: {{humanize .Description}}"
-	DefaultBody  = `{{with .Issue}}Closes {{.}}.
+	DefaultBody  = `{{with .Issue}}Closes #{{.}}.
 
 {{end}}## Description
 

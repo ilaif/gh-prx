@@ -14,11 +14,15 @@ A GitHub (`gh`) CLI extension to automate the daily work with **branches**, **co
     gh prx checkout-new 1234 # Where 1234 is the issue's number/code
     ```
 
+   <img src="https://github.com/ilaif/gh-prx/raw/main/assets/gh-prx-checkout-new.gif" width="700">
+
 2. Creating a new PR with automatically generated title/body and checklist prompt:
 
     ```sh
     gh prx create
     ```
+
+   <img src="https://github.com/ilaif/gh-prx/raw/main/assets/gh-prx-create.gif" width="700">
 
 > Explore further by running `gh prx --help`
 
@@ -72,7 +76,7 @@ issue:
 The PR description is based on the repo's `.github/pull_request_template.md`. If this file does not exist, a default template is used:
 
    ```markdown
-   {{with .Issue}}Closes {{.}}.
+   {{with .Issue}}Closes #{{.}}.
 
    {{end}}## Description
 
