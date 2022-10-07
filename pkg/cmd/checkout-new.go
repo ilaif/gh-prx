@@ -9,16 +9,13 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/ilaif/gh-prx/pkg"
+	"github.com/ilaif/gh-prx/pkg/branch"
+	"github.com/ilaif/gh-prx/pkg/config"
+	"github.com/ilaif/gh-prx/pkg/providers"
 	"github.com/ilaif/gh-prx/pkg/utils"
 )
 
-type CheckoutNewOpts struct {
-}
-
-func newCheckoutNewCmd() *cobra.Command {
-	opts := &CreateOptions{}
-
+func NewCheckoutNewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "checkout-new <issue-id>",
 		Short: "Create a new branch based on an issue and checkout to it.",
@@ -36,21 +33,26 @@ func newCheckoutNewCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
-			return checkoutNew(ctx, args[0], opts)
+			return checkoutNew(ctx, args[0])
 		},
 	}
 
 	return cmd
 }
 
-func checkoutNew(ctx context.Context, id string, opts *CreateOptions) error {
+func checkoutNew(ctx context.Context, id string) error {
 	log.Debug("Loading config")
-	cfg, err := pkg.LoadConfig()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
 	}
 
-	provider, err := pkg.NewIssueProvider(cfg.Issue.Provider)
+	setupCfg, err := config.LoadSetupConfig()
+	if err != nil {
+		return err
+	}
+
+	provider, err := providers.NewIssueProvider(cfg.Issue.Provider, setupCfg)
 	if err != nil {
 		return err
 	}
@@ -62,13 +64,13 @@ func checkoutNew(ctx context.Context, id string, opts *CreateOptions) error {
 		return errors.Wrap(err, "failed to get issue")
 	}
 
-	branchName, err := pkg.TemplateBranchName(cfg.Branch, issue)
+	branchName, err := branch.TemplateBranchName(cfg, issue)
 	if err != nil {
 		return err
 	}
 
 	log.Debugf("Creating branch '%s' and checking out to it", branchName)
-	out, err := utils.Exec(ctx, "git", "checkout", "-b", branchName)
+	out, err := utils.Exec("git", "checkout", "-b", branchName)
 	if err != nil {
 		return errors.Wrap(err, "Failed to create branch")
 	}

@@ -32,3 +32,4 @@ issues:
   max-same-issues: 0
 run:
   timeout: 3m
+  skip-dirs: [tmp]

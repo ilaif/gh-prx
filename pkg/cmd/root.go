@@ -6,6 +6,8 @@ import (
 
 	"github.com/caarlos0/log"
 	"github.com/spf13/cobra"
+
+	"github.com/ilaif/gh-prx/pkg/cmd/setup"
 )
 
 func Execute(version string) {
@@ -43,8 +45,9 @@ func NewRootCmd(version string) *cobra.Command {
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "verbose logging")
 
 	rootCmd.AddCommand(
-		newCreateCmd(),
-		newCheckoutNewCmd(),
+		setup.NewSetupCmd(),
+		NewCreateCmd(),
+		NewCheckoutNewCmd(),
 	)
 
 	return rootCmd

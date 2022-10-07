@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
@@ -11,11 +10,13 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/ilaif/gh-prx/pkg"
+	"github.com/ilaif/gh-prx/pkg/branch"
+	"github.com/ilaif/gh-prx/pkg/config"
+	"github.com/ilaif/gh-prx/pkg/pr"
 	"github.com/ilaif/gh-prx/pkg/utils"
 )
 
-type CreateOptions struct {
+type CreateOpts struct {
 	Confirm bool
 
 	WebMode     bool
@@ -32,8 +33,8 @@ type CreateOptions struct {
 	Milestone string
 }
 
-func newCreateCmd() *cobra.Command {
-	opts := &CreateOptions{}
+func NewCreateCmd() *cobra.Command {
+	opts := &CreateOpts{}
 
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -58,9 +59,7 @@ func newCreateCmd() *cobra.Command {
 		Aliases: []string{"new"},
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := cmd.Context()
-
-			return create(ctx, opts)
+			return create(opts)
 		},
 	}
 
@@ -93,28 +92,28 @@ func newCreateCmd() *cobra.Command {
 	return cmd
 }
 
-func create(ctx context.Context, opts *CreateOptions) error {
+func create(opts *CreateOpts) error {
 	log.Debug("Loading config")
-	cfg, err := pkg.LoadConfig()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
 	}
 
 	log.Debug("Fetching current branch name")
-	out, err := utils.Exec(ctx, "git", "branch", "--show-current")
+	out, err := utils.Exec("git", "branch", "--show-current")
 	if err != nil {
 		return err
 	}
 	branchName := strings.Trim(out, "\n")
 
-	b, err := pkg.ParseBranch(branchName, cfg.Branch)
+	b, err := branch.ParseBranch(branchName, cfg.Branch)
 	if err != nil {
 		return err
 	}
 
 	if *cfg.PR.PushToRemote {
 		s := utils.StartSpinner("Pushing current branch to remote...", "Pushed branch to remote")
-		out, err = utils.Exec(ctx, "git", "push", "--set-upstream", "origin", b.Original)
+		out, err = utils.Exec("git", "push", "--set-upstream", "origin", b.Original)
 		s.Stop()
 		if err != nil {
 			return err
@@ -139,7 +138,7 @@ func create(ctx context.Context, opts *CreateOptions) error {
 	}
 
 	commitsFetcher := func() ([]string, error) {
-		out, err := utils.Exec(ctx, "git", "log", "--pretty=format:%s", "--no-merges", b.Original, "^"+base)
+		out, err := utils.Exec("git", "log", "--pretty=format:%s", "--no-merges", b.Original, "^"+base)
 		if err != nil {
 			return nil, errors.Wrap(err, "Failed to fetch branch commits")
 		}
@@ -147,7 +146,7 @@ func create(ctx context.Context, opts *CreateOptions) error {
 		return strings.Split(out, "\n"), nil
 	}
 
-	pr, err := pkg.TemplatePR(b, cfg.PR, opts.Confirm, cfg.Branch.TokenSeparators, commitsFetcher)
+	pr, err := pr.TemplatePR(b, cfg.PR, opts.Confirm, cfg.Branch.TokenSeparators, commitsFetcher)
 	if err != nil {
 		return err
 	}
@@ -200,7 +199,7 @@ func createLabels(labels []string) error {
 	return nil
 }
 
-func generatePrCreateArgsFromOpts(opts *CreateOptions, labels []string) []string {
+func generatePrCreateArgsFromOpts(opts *CreateOpts, labels []string) []string {
 	args := []string{}
 
 	if len(opts.Assignees) > 0 {
