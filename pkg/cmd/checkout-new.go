@@ -61,7 +61,7 @@ func checkoutNew(ctx context.Context, id string) error {
 	issue, err := provider.Get(ctx, id)
 	s.Stop()
 	if err != nil {
-		return errors.Wrap(err, "failed to get issue")
+		return errors.Wrap(err, "Failed to get issue")
 	}
 
 	branchName, err := branch.TemplateBranchName(cfg, issue)

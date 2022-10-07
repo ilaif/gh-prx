@@ -55,12 +55,12 @@ func LoadSetupConfig() (*SetupConfig, error) {
 			return &SetupConfig{}, nil
 		}
 
-		return nil, errors.Wrap(err, "failed to check if config file exists")
+		return nil, errors.Wrap(err, "Failed to check if config file exists")
 	}
 
 	cfg := &SetupConfig{}
 	if err := utils.ReadYaml(filename, cfg); err != nil {
-		return nil, errors.Wrap(err, "failed to load config")
+		return nil, errors.Wrap(err, "Failed to load config")
 	}
 
 	return cfg, nil
@@ -75,10 +75,10 @@ func SaveSetupConfig(cfg *SetupConfig) error {
 	if _, err := os.Stat(cfgDir); err != nil {
 		if os.IsNotExist(err) {
 			if err := os.MkdirAll(cfgDir, os.ModePerm); err != nil {
-				return errors.Wrap(err, "failed to create config dir")
+				return errors.Wrap(err, "Failed to create config dir")
 			}
 		} else {
-			return errors.Wrapf(err, "failed to check if config dir '%s' exists", cfgDir)
+			return errors.Wrapf(err, "Failed to check if config dir '%s' exists", cfgDir)
 		}
 	}
 
@@ -87,7 +87,7 @@ func SaveSetupConfig(cfg *SetupConfig) error {
 	log.Infof("Saving config to %s", filename)
 
 	if err := utils.WriteYaml(filename, cfg); err != nil {
-		return errors.Wrap(err, "failed to save config")
+		return errors.Wrap(err, "Failed to save config")
 	}
 
 	return nil
@@ -96,7 +96,7 @@ func SaveSetupConfig(cfg *SetupConfig) error {
 func getSetupConfigDir() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get user home dir")
+		return "", errors.Wrap(err, "Failed to get user home dir")
 	}
 
 	cfgDir := path.Join(homeDir, "./.config/gh-prx")
