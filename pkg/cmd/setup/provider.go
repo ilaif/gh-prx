@@ -59,7 +59,7 @@ func setupProvider(ctx context.Context, provider string, opts *ProviderOpts) err
 
 	cfg, err := config.LoadSetupConfig()
 	if err != nil {
-		return errors.Wrap(err, "failed to load setup config")
+		return errors.Wrap(err, "Failed to load setup config")
 	}
 
 	switch provider {
@@ -76,7 +76,7 @@ func setupProvider(ctx context.Context, provider string, opts *ProviderOpts) err
 	}
 
 	if err := config.SaveSetupConfig(cfg); err != nil {
-		return errors.Wrap(err, "failed to save setup config")
+		return errors.Wrap(err, "Failed to save setup config")
 	}
 
 	log.Infof("Successfully setup provider '%s'", provider)

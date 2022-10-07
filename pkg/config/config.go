@@ -46,6 +46,7 @@ var (
 	}
 	DefaultTokenSeparators = []string{"-", "_"}
 	Providers              = []string{"github", "jira"}
+	DefaultProvider        = "github"
 	ErrInvalidProvider     = errors.New("Invalid provider")
 )
 
@@ -80,7 +81,7 @@ type IssueConfig struct {
 
 func (c *IssueConfig) SetDefaults() {
 	if c.Provider == "" {
-		c.Provider = "github"
+		c.Provider = DefaultProvider
 	}
 
 	if len(c.Types) == 0 {

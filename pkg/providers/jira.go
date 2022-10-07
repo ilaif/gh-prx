@@ -39,9 +39,17 @@ func (p *JiraIssueProvider) Get(ctx context.Context, id string) (*models.Issue, 
 	client := &http.Client{Timeout: time.Second * 5}
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get Jira issue '%s'", id)
+		return nil, errors.Wrapf(err, "Failed to get Jira issue '%s'", id)
 	}
 	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		if res.StatusCode == http.StatusNotFound {
+			return nil, errors.Errorf("Jira issue '%s' not found", id)
+		}
+
+		return nil, errors.Errorf("Failed to get Jira issue '%s': %s", id, res.Status)
+	}
 
 	issue := &JiraIssue{}
 	if err := json.NewDecoder(res.Body).Decode(issue); err != nil {

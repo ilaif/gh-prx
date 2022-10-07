@@ -69,7 +69,7 @@ pr:
    answer_checklist: true # Whether to prompt the user to answer PR description checklists. Possible answers: yes, no, skip (remove the item)
    push_to_remote: true # Whether to push the local changes to remote before creating the PR
 issue:
-   provider: github # The provider to use for fetching issue details
+   provider: github # The provider to use for fetching issue details (supported: github,jira)
    types: ["fix", "feat", "chore", "docs", "refactor", "test", "style", "build", "ci", "perf", "revert"] # The issue types to prompt the user when creating a new branch
 ```
 
