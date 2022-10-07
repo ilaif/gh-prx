@@ -77,6 +77,23 @@ func TemplateBranchName(cfg *config.Config, issue *models.Issue) (string, error)
 
 	name := normalizeBranchName(tpl.String(), cfg.Branch.TokenSeparators)
 
+	if len(name) > cfg.Branch.MaxLength {
+		var userReply bool
+		if err := survey.AskOne(&survey.Confirm{
+			Message: fmt.Sprintf("Branch name is too long, do you want to change it?\n>> %s", name),
+		}, &userReply); err != nil {
+			return "", errors.Wrap(err, "Failed to prompt for branch name")
+		}
+
+		if userReply {
+			newName, err := utils.EditString(name)
+			if err != nil {
+				return "", errors.Wrap(err, "Failed to edit branch name")
+			}
+			name = normalizeBranchName(newName, cfg.Branch.TokenSeparators)
+		}
+	}
+
 	return name, nil
 }
 
@@ -104,7 +121,7 @@ func normalizeBranchName(name string, tokenSeparators []string) string {
 	}
 
 	name = utils.RemoveConsecutiveDuplicates(name, runeTokenSeparators)
-	name = strings.Trim(name, "-")
+	name = strings.Trim(name, "-\n")
 
 	return name
 }

@@ -128,6 +128,8 @@ type BranchConfig struct {
 	VariablePatterns map[string]string `yaml:"variable_patterns"`
 
 	TokenSeparators []string `yaml:"token_separators"`
+
+	MaxLength int `yaml:"max_length"`
 }
 
 func (c *BranchConfig) SetDefaults() {
@@ -147,6 +149,10 @@ func (c *BranchConfig) SetDefaults() {
 		c.TokenSeparators = DefaultTokenSeparators
 	}
 	c.TokenSeparators = append(c.TokenSeparators, "/")
+
+	if c.MaxLength == 0 {
+		c.MaxLength = 60
+	}
 }
 
 func (c *BranchConfig) Validate() error {

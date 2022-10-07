@@ -62,6 +62,7 @@ branch:
       Issue: "[0-9]+"
       Description: ".*"
    token_separators: ["-", "_"] # Characters used to separate branch name into a human-readable string
+   max_length: 60 # Max characters to allow for branch length without prompting for changing it
 pr:
    title: "{{.Type}}{{with .Issue}}({{.}}){{end}}: {{humanize .Description}}" # PR title template
    ignore_commits_patterns: ["^wip"] # Patterns to filter out a commits from the {{.Commits}} variable

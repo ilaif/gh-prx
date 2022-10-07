@@ -70,7 +70,7 @@ func checkoutNew(ctx context.Context, id string) error {
 	}
 
 	log.Debugf("Creating branch '%s' and checking out to it", branchName)
-	out, err := utils.Exec(ctx, "git", "checkout", "-b", branchName)
+	out, err := utils.Exec("git", "checkout", "-b", branchName)
 	if err != nil {
 		return errors.Wrap(err, "Failed to create branch")
 	}

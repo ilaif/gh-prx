@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
@@ -60,9 +59,7 @@ func NewCreateCmd() *cobra.Command {
 		Aliases: []string{"new"},
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := cmd.Context()
-
-			return create(ctx, opts)
+			return create(opts)
 		},
 	}
 
@@ -95,7 +92,7 @@ func NewCreateCmd() *cobra.Command {
 	return cmd
 }
 
-func create(ctx context.Context, opts *CreateOpts) error {
+func create(opts *CreateOpts) error {
 	log.Debug("Loading config")
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -103,7 +100,7 @@ func create(ctx context.Context, opts *CreateOpts) error {
 	}
 
 	log.Debug("Fetching current branch name")
-	out, err := utils.Exec(ctx, "git", "branch", "--show-current")
+	out, err := utils.Exec("git", "branch", "--show-current")
 	if err != nil {
 		return err
 	}
@@ -116,7 +113,7 @@ func create(ctx context.Context, opts *CreateOpts) error {
 
 	if *cfg.PR.PushToRemote {
 		s := utils.StartSpinner("Pushing current branch to remote...", "Pushed branch to remote")
-		out, err = utils.Exec(ctx, "git", "push", "--set-upstream", "origin", b.Original)
+		out, err = utils.Exec("git", "push", "--set-upstream", "origin", b.Original)
 		s.Stop()
 		if err != nil {
 			return err
@@ -141,7 +138,7 @@ func create(ctx context.Context, opts *CreateOpts) error {
 	}
 
 	commitsFetcher := func() ([]string, error) {
-		out, err := utils.Exec(ctx, "git", "log", "--pretty=format:%s", "--no-merges", b.Original, "^"+base)
+		out, err := utils.Exec("git", "log", "--pretty=format:%s", "--no-merges", b.Original, "^"+base)
 		if err != nil {
 			return nil, errors.Wrap(err, "Failed to fetch branch commits")
 		}
