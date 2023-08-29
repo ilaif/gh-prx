@@ -42,12 +42,13 @@ func NewCheckoutNewCmd() *cobra.Command {
 
 func checkoutNew(ctx context.Context, id string) error {
 	log.Debug("Loading config")
-	cfg, err := config.LoadConfig()
+
+	setupCfg, err := config.LoadSetupConfig()
 	if err != nil {
 		return err
 	}
 
-	setupCfg, err := config.LoadSetupConfig()
+	cfg, err := config.LoadRepositoryConfig(setupCfg.RepositoryConfig)
 	if err != nil {
 		return err
 	}

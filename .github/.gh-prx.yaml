@@ -1,0 +1,7 @@
+issue:
+  provider: github
+branch:
+  variable_patterns:
+    Type: "fix|feat|chore|docs|refactor|test|style|build|ci|perf|revert"
+    Issue: "[0-9]+"
+    Description: ".*"

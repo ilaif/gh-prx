@@ -121,9 +121,7 @@ func fetchCommits(ignoreCommitsPatterns []string, commitsFetcher CommitsFetcher)
 
 func answerPRChecklist(body string, confirm bool) (string, error) {
 	if confirm {
-		log.Info("Answering checklist (if exists in PR description)")
-	} else {
-		log.Info("Answering no for all checklist items (if exists in PR description)")
+		log.Info("Answering yes to all checklist items (if exists in PR description)")
 	}
 
 	bodyLines := strings.Split(body, "\n")

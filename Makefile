@@ -23,5 +23,10 @@ testwatch: ## Run unit tests in watch mode, re-running tests on each file change
 build: ## Build the binary
 	go build ./
 
-install-extension: ## Installs the extension locally
+install-extension-local: build ## Installs the extension locally
+	gh extension remove prx
 	gh extension install .
+
+install-extension-remote: ## Installs the extension remotely
+	gh extension remove prx
+	gh extension install prx

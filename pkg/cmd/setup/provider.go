@@ -54,7 +54,7 @@ func NewProviderCmd() *cobra.Command {
 	return cmd
 }
 
-func setupProvider(ctx context.Context, provider string, opts *ProviderOpts) error {
+func setupProvider(_ context.Context, provider string, opts *ProviderOpts) error {
 	log.Infof("Setting up provider '%s'", provider)
 
 	cfg, err := config.LoadSetupConfig()

@@ -3,6 +3,7 @@ module github.com/ilaif/gh-prx
 go 1.18
 
 require (
+	dario.cat/mergo v1.0.0
 	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/briandowns/spinner v1.19.0
