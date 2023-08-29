@@ -48,7 +48,7 @@ func ParseBranch(name string, cfg config.BranchConfig) (models.Branch, error) {
 	return branch, nil
 }
 
-func TemplateBranchName(cfg *config.Config, issue *models.Issue) (string, error) {
+func TemplateBranchName(cfg *config.RepositoryConfig, issue *models.Issue) (string, error) {
 	log.Debug("Templating branch name")
 
 	funcMaps, err := utils.GenerateTemplateFunctions(cfg.Branch.TokenSeparators)

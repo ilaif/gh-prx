@@ -13,6 +13,10 @@ import (
 
 type SetupConfig struct {
 	JiraConfig JiraConfig `yaml:"jira"`
+
+	// RepositoryConfig a global config for all repositories.
+	// Per-repository config properties will override this one.
+	RepositoryConfig RepositoryConfig `yaml:"global"`
 }
 
 type JiraConfig struct {

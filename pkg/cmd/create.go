@@ -47,7 +47,7 @@ func NewCreateCmd() *cobra.Command {
 
 			A pull request title will be generated based on the current branch name and the config file (if present).
 
-			A pull request description (body) template can be defined in %[1]s.github/.pull_request_template.md%[1]s.
+			A pull request description (body) template can be defined in %[1]s.github/pull_request_template.md%[1]s.
 
 			All of %[1]sgh pr create%[1]s flags are supported.
 		`, "`"),
@@ -94,7 +94,13 @@ func NewCreateCmd() *cobra.Command {
 
 func create(opts *CreateOpts) error {
 	log.Debug("Loading config")
-	cfg, err := config.LoadConfig()
+
+	setupCfg, err := config.LoadSetupConfig()
+	if err != nil {
+		return err
+	}
+
+	cfg, err := config.LoadRepositoryConfig(setupCfg.RepositoryConfig)
 	if err != nil {
 		return err
 	}
@@ -132,7 +138,7 @@ func create(opts *CreateOpts) error {
 		base = strings.Trim(stdOut.String(), "\n")
 	}
 
-	prTemplateBytes, err := utils.ReadFile(".github/.pull_request_template.md")
+	prTemplateBytes, err := utils.ReadFile(".github/pull_request_template.md")
 	if err == nil {
 		cfg.PR.Body = string(prTemplateBytes)
 	}

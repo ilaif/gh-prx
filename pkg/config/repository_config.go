@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 
+	"dario.cat/mergo"
 	"github.com/caarlos0/log"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
@@ -50,19 +51,19 @@ var (
 	ErrInvalidProvider     = errors.New("Invalid provider")
 )
 
-type Config struct {
+type RepositoryConfig struct {
 	Branch BranchConfig      `yaml:"branch"`
 	PR     PullRequestConfig `yaml:"pr"`
 	Issue  IssueConfig       `yaml:"issue"`
 }
 
-func (c *Config) SetDefaults() {
+func (c *RepositoryConfig) SetDefaults() {
 	c.Branch.SetDefaults()
 	c.PR.SetDefaults()
 	c.Issue.SetDefaults()
 }
 
-func (c *Config) Validate() error {
+func (c *RepositoryConfig) Validate() error {
 	if err := c.Branch.Validate(); err != nil {
 		return errors.Wrap(err, "branch")
 	}
@@ -181,6 +182,7 @@ func (c *PullRequestConfig) SetDefaults() {
 	}
 
 	if c.Body == "" {
+
 		c.Body = DefaultBody
 	}
 
@@ -199,14 +201,18 @@ func (c *PullRequestConfig) SetDefaults() {
 	}
 }
 
-func LoadConfig() (*Config, error) {
-	cfg := &Config{}
+func LoadRepositoryConfig(globalRepoConfig RepositoryConfig) (*RepositoryConfig, error) {
+	cfg := &RepositoryConfig{}
 	if err := utils.ReadYaml(DefaultConfigFilepath, cfg); err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return nil, errors.Wrap(err, "Failed to load config")
 		}
 
 		log.Infof("No config file found at '%s', using defaults", DefaultConfigFilepath)
+	}
+
+	if err := mergo.Merge(cfg, globalRepoConfig); err != nil {
+		return nil, errors.Wrap(err, "Failed to merge global config to repository config")
 	}
 
 	cfg.SetDefaults()

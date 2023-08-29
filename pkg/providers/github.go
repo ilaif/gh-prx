@@ -31,7 +31,7 @@ var (
 type GitHubIssueProvider struct {
 }
 
-func (p *GitHubIssueProvider) Get(ctx context.Context, id string) (*models.Issue, error) {
+func (p *GitHubIssueProvider) Get(_ context.Context, id string) (*models.Issue, error) {
 	stdOut, _, err := gh.Exec("issue", "view", id, "--json", "number,title,labels")
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to get GitHub issue")
