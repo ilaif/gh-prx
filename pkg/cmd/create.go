@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
@@ -10,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/ilaif/gh-prx/pkg/ai"
 	"github.com/ilaif/gh-prx/pkg/branch"
 	"github.com/ilaif/gh-prx/pkg/config"
 	"github.com/ilaif/gh-prx/pkg/pr"
@@ -31,6 +34,8 @@ type CreateOpts struct {
 	Labels    []string
 	Projects  []string
 	Milestone string
+
+	NoAISummary bool
 }
 
 func NewCreateCmd() *cobra.Command {
@@ -59,7 +64,7 @@ func NewCreateCmd() *cobra.Command {
 		Aliases: []string{"new"},
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return create(opts)
+			return create(cmd.Context(), opts)
 		},
 	}
 
@@ -88,11 +93,12 @@ func NewCreateCmd() *cobra.Command {
 	fl.StringVarP(&opts.Milestone, "milestone", "m", "", "Add the pull request to a milestone by `name`")
 	fl.Bool("no-maintainer-edit", false, "Disable maintainer's ability to modify pull request")
 	fl.StringVar(&opts.RecoverFile, "recover", "", "Recover input from a failed run of create")
+	fl.Bool("no-ai-summary", false, "Disable AI-powered summary")
 
 	return cmd
 }
 
-func create(opts *CreateOpts) error {
+func create(ctx context.Context, opts *CreateOpts) error {
 	log.Debug("Loading config")
 
 	setupCfg, err := config.LoadSetupConfig()
@@ -106,11 +112,11 @@ func create(opts *CreateOpts) error {
 	}
 
 	log.Debug("Fetching current branch name")
-	out, err := utils.Exec("git", "branch", "--show-current")
+	gitDiffOutput, err := utils.Exec("git", "branch", "--show-current")
 	if err != nil {
 		return err
 	}
-	branchName := strings.Trim(out, "\n")
+	branchName := strings.Trim(gitDiffOutput, "\n")
 
 	b, err := branch.ParseBranch(branchName, cfg.Branch)
 	if err != nil {
@@ -119,12 +125,12 @@ func create(opts *CreateOpts) error {
 
 	if *cfg.PR.PushToRemote {
 		s := utils.StartSpinner("Pushing current branch to remote...", "Pushed branch to remote")
-		out, err = utils.Exec("git", "push", "--set-upstream", "origin", b.Original)
+		gitDiffOutput, err = utils.Exec("git", "push", "--set-upstream", "origin", b.Original)
 		s.Stop()
 		if err != nil {
 			return err
 		}
-		log.Info(strings.Trim(out, "\n"))
+		log.Info(strings.Trim(gitDiffOutput, "\n"))
 	}
 
 	base := opts.BaseBranch
@@ -138,9 +144,11 @@ func create(opts *CreateOpts) error {
 		base = strings.Trim(stdOut.String(), "\n")
 	}
 
-	prTemplateBytes, err := utils.ReadFile(".github/pull_request_template.md")
-	if err == nil {
-		cfg.PR.Body = string(prTemplateBytes)
+	if cfg.IgnorePullRequestTemplate != nil && *cfg.IgnorePullRequestTemplate {
+		prTemplateBytes, err := utils.ReadFile(".github/pull_request_template.md")
+		if err == nil {
+			cfg.PR.Body = string(prTemplateBytes)
+		}
 	}
 
 	commitsFetcher := func() ([]string, error) {
@@ -152,10 +160,20 @@ func create(opts *CreateOpts) error {
 		return strings.Split(out, "\n"), nil
 	}
 
-	pr, err := pr.TemplatePR(b, cfg.PR, opts.Confirm, cfg.Branch.TokenSeparators, commitsFetcher)
+	aiSummarizer := func() (string, error) {
+		if opts.NoAISummary || !ai.IsAISummarizerAvailable() {
+			return "", nil
+		}
+
+		return createAISummary(ctx, base, commitsFetcher)
+	}
+
+	pr, err := pr.TemplatePR(b, cfg.PR, opts.Confirm, cfg.Branch.TokenSeparators, commitsFetcher, aiSummarizer)
 	if err != nil {
 		return err
 	}
+
+	log.Debug(fmt.Sprintf("Pull request body:\n\n%s", pr.Body))
 
 	if len(pr.Labels) > 0 {
 		if err := createLabels(pr.Labels); err != nil {
@@ -174,6 +192,44 @@ func create(opts *CreateOpts) error {
 	log.Info(strings.Trim(stdOut.String(), "\n"))
 
 	return nil
+}
+
+func createAISummary(ctx context.Context,
+	base string,
+	commitsFetcher func() ([]string, error),
+) (string, error) {
+	aiSummary := ""
+
+	s := utils.StartSpinner("Creating an AI-powered summary", "Finished summarizing")
+	defer s.Stop()
+
+	gitDiffCmd := heredoc.Docf(`
+			git diff main --stat |
+			grep '|' |
+			awk '{ if ($3 > 10) print $1 }' |
+			xargs git diff ^%s --ignore-all-space --ignore-blank-lines --ignore-space-change --unified=0 --word-diff --
+		`, base)
+	gitDiffOutput, err := utils.Exec("sh", "-c", gitDiffCmd)
+	if err != nil {
+		return "", errors.Wrap(err, "Failed to fetch branch commits")
+	}
+
+	aiSummary, err = ai.SummarizeGitDiffOutput(ctx, gitDiffOutput)
+	if err != nil {
+		// Fallback to file and commit diff
+
+		commits, err := commitsFetcher()
+		if err != nil {
+			return "", err
+		}
+
+		aiSummary, err = ai.SummarizeGitDiffOutput(ctx, strings.Join(commits, "\n"))
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return aiSummary, nil
 }
 
 func createLabels(labels []string) error {

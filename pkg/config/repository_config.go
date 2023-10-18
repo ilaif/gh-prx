@@ -19,11 +19,12 @@ const (
 
 {{end}}## Description
 
-{{humanize .Description}}
+{{if .AISummary}}{{.AISummary}}{{ else }}{{humanize .Description}}
 
 Change(s) in this PR:
 {{range $commit := .Commits}}
 * {{$commit}}
+{{- end}}
 {{- end}}
 
 ## PR Checklist
@@ -52,9 +53,10 @@ var (
 )
 
 type RepositoryConfig struct {
-	Branch BranchConfig      `yaml:"branch"`
-	PR     PullRequestConfig `yaml:"pr"`
-	Issue  IssueConfig       `yaml:"issue"`
+	Branch                    BranchConfig      `yaml:"branch"`
+	PR                        PullRequestConfig `yaml:"pr"`
+	Issue                     IssueConfig       `yaml:"issue"`
+	IgnorePullRequestTemplate *bool             `yaml:"ignore_pull_request_template"`
 }
 
 func (c *RepositoryConfig) SetDefaults() {
@@ -182,7 +184,6 @@ func (c *PullRequestConfig) SetDefaults() {
 	}
 
 	if c.Body == "" {
-
 		c.Body = DefaultBody
 	}
 
