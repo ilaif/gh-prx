@@ -80,7 +80,7 @@ func TemplatePR(
 	if err != nil {
 		return models.PullRequest{}, errors.Wrap(err, "Failed to parse pr body template")
 	}
-	if err := bodyTpl.Option("missingkey=error").Execute(&res, bodyData); err != nil {
+	if err := bodyTpl.Option("missingkey=zero").Execute(&res, bodyData); err != nil {
 		return models.PullRequest{}, errors.Wrap(err, "Failed to template pr body")
 	}
 	pr.Body = res.String()
