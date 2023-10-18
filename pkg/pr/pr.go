@@ -31,10 +31,11 @@ type CommitsFetcher func() ([]string, error)
 
 func TemplatePR(
 	b models.Branch,
-	cfg config.PullRequestConfig,
+	prCfg config.PullRequestConfig,
 	confirm bool,
 	tokenSeparators []string,
 	commitsFetcher CommitsFetcher,
+	aiSummarizer func() (string, error),
 ) (models.PullRequest, error) {
 	log.Debug("Templating PR")
 
@@ -46,7 +47,7 @@ func TemplatePR(
 	pr := models.PullRequest{}
 
 	res := bytes.Buffer{}
-	titleTpl, err := template.New("pr-title-tpl").Funcs(funcMaps).Parse(cfg.Title)
+	titleTpl, err := template.New("pr-title-tpl").Funcs(funcMaps).Parse(prCfg.Title)
 	if err != nil {
 		return models.PullRequest{}, errors.Wrap(err, "Failed to parse pr title template")
 	}
@@ -55,26 +56,36 @@ func TemplatePR(
 	}
 	pr.Title = res.String()
 
-	if strings.Contains(cfg.Body, ".Commits") {
+	bodyData := lo.Assign(b.Fields, make(map[string]any))
+
+	if strings.Contains(prCfg.Body, ".Commits") {
 		log.Debug("Fetching commits")
-		commits, err := fetchCommits(cfg.IgnoreCommitsPatterns, commitsFetcher)
+		commits, err := fetchCommits(prCfg.IgnoreCommitsPatterns, commitsFetcher)
 		if err != nil {
 			return models.PullRequest{}, err
 		}
-		b.Fields["Commits"] = commits
+		bodyData["Commits"] = commits
+	}
+
+	if strings.Contains(prCfg.Body, ".AISummary") {
+		aiSummary, err := aiSummarizer()
+		if err != nil {
+			return models.PullRequest{}, err
+		}
+		bodyData["AISummary"] = aiSummary
 	}
 
 	res = bytes.Buffer{}
-	bodyTpl, err := template.New("pr-body-tpl").Funcs(funcMaps).Parse(cfg.Body)
+	bodyTpl, err := template.New("pr-body-tpl").Funcs(funcMaps).Parse(prCfg.Body)
 	if err != nil {
 		return models.PullRequest{}, errors.Wrap(err, "Failed to parse pr body template")
 	}
-	if err := bodyTpl.Option("missingkey=error").Execute(&res, b.Fields); err != nil {
+	if err := bodyTpl.Option("missingkey=zero").Execute(&res, bodyData); err != nil {
 		return models.PullRequest{}, errors.Wrap(err, "Failed to template pr body")
 	}
 	pr.Body = res.String()
 
-	if *cfg.AnswerChecklist {
+	if *prCfg.AnswerChecklist {
 		body, err := answerPRChecklist(pr.Body, confirm)
 		if err != nil {
 			return models.PullRequest{}, err

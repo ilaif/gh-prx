@@ -43,6 +43,7 @@ Many of us find the terminal and CLI applications as our main toolkit.
   * Add labels based on issue types
   * Filter commits and display them in the PR description
   * Interactively answer PR checklists before creating the PR
+  * Use AI (🔮) to summarize the PR's changes
   * All `gh pr create` original flags are extended into the tool
 
 > `gh-prx` is an early-stage project. Got a new feature in mind? Open a pull request or a [feature request](https://github.com/ilaif/gh-prx/issues/new) 🙏
@@ -71,6 +72,7 @@ pr:
 issue:
    provider: github # The provider to use for fetching issue details (supported: github,jira)
    types: ["fix", "feat", "chore", "docs", "refactor", "test", "style", "build", "ci", "perf", "revert"] # The issue types to prompt the user when creating a new branch
+   ignore_pull_request_template: false # If true, the pull request template in the repository will be ignored.
 ```
 
 ### PR Description (Body)
@@ -82,7 +84,13 @@ The PR description is based on the repo's `.github/pull_request_template.md`. If
 
    {{end}}## Description
 
-   {{ humanize .Description}}
+   {{if .AISummary}}{{.AISummary}}{{ else }}{{humanize .Description}}
+
+   Change(s) in this PR:
+   {{range $commit := .Commits}}
+   * {{$commit}}
+   {{- end}}
+   {{- end}}
 
    ## PR Checklist
 
@@ -124,6 +132,13 @@ This is "my dashed string"
 * `{{.Issue}}` - Used as a placeholder for the issue key when creating a new branch.
 * `{{.Description}}` - Used as a placeholder for the issue title when creating a new branch.
 * `{{.Commits}}` - Used as a placeholder in a PR description (body) to iterate over filtered commits.
+* `{{.AISummary}}` - Used as a placeholder in a PR description (body) to add a summary of the PR's changes based on AI.
+
+## AI summary configuration
+
+Just export your OpenAI key as an env var named `OPENAI_API_KEY` and you're good to go.
+
+To disable the AI summary, use the `--no-ai-summary` flag.
 
 ## Installation
 
@@ -160,7 +175,7 @@ This is "my dashed string"
 3. Install it locally
 
    ```bash
-   gh extension install .
+   make install-extension-local
    ```
 
 </details>
