@@ -99,8 +99,6 @@ func NewCreateCmd() *cobra.Command {
 }
 
 func create(ctx context.Context, opts *CreateOpts) error {
-	log.Debug("Loading config")
-
 	setupCfg, err := config.LoadSetupConfig()
 	if err != nil {
 		return err

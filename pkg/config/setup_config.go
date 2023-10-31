@@ -48,6 +48,7 @@ func (c *JiraConfig) Validate() error {
 }
 
 func LoadSetupConfig() (*SetupConfig, error) {
+	log.Debug("Loading config")
 	cfgDir, err := getSetupConfigDir()
 	if err != nil {
 		return nil, err

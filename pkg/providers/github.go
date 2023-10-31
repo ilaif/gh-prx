@@ -8,6 +8,7 @@ import (
 	"github.com/cli/go-gh"
 	"github.com/pkg/errors"
 
+	"github.com/ilaif/gh-prx/pkg/config"
 	"github.com/ilaif/gh-prx/pkg/models"
 )
 
@@ -29,6 +30,7 @@ var (
 )
 
 type GitHubIssueProvider struct {
+	CheckoutNewConfig config.CheckoutNewGitHubConfig
 }
 
 func (p *GitHubIssueProvider) Get(_ context.Context, id string) (*models.Issue, error) {
@@ -43,6 +45,27 @@ func (p *GitHubIssueProvider) Get(_ context.Context, id string) (*models.Issue, 
 	}
 
 	return issue.ToIssue(), nil
+}
+
+func (p *GitHubIssueProvider) List(_ context.Context) ([]*models.Issue, error) {
+	args := []string{"issue", "list", "--json", "number,title,labels"}
+	args = append(args, p.CheckoutNewConfig.IssueListFlags...)
+	stdOut, _, err := gh.Exec(args...)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to list GitHub issues")
+	}
+
+	issues := []*GitHubIssue{}
+	if err := json.Unmarshal(stdOut.Bytes(), &issues); err != nil {
+		return nil, errors.Wrap(err, "Failed to parse GitHub issues")
+	}
+
+	result := []*models.Issue{}
+	for _, issue := range issues {
+		result = append(result, issue.ToIssue())
+	}
+
+	return result, nil
 }
 
 type GitHubIssue struct {

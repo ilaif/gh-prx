@@ -11,7 +11,7 @@ A GitHub (`gh`) CLI extension to automate the daily work with **branches**, **co
 1. Checking out to an automatically generated branch:
 
     ```sh
-    gh prx checkout-new 1234 # Where 1234 is the issue's key
+    gh prx checkout-new 1234 # Where 1234 is the issue's key. If not provided, a list of issues will be prompted.
     ```
 
    <img src="https://github.com/ilaif/gh-prx/raw/main/assets/gh-prx-checkout-new.gif" width="700">
@@ -73,6 +73,12 @@ issue:
    provider: github # The provider to use for fetching issue details (supported: github,jira)
    types: ["fix", "feat", "chore", "docs", "refactor", "test", "style", "build", "ci", "perf", "revert"] # The issue types to prompt the user when creating a new branch
    ignore_pull_request_template: false # If true, the pull request template in the repository will be ignored.
+checkout_new:
+   jira:
+      project: "" # The Jira project key to use when creating a new branch
+      issue_jql: "[<jira_project>+AND+]assignee=currentUser()+AND+status!=Done+ORDER+BY+updated+DESC" # The Jira JQL to use when fetching issues. <jira_project> is optional and will be replaced with the project key that is configured in the `project` field.
+   github:
+      issue_list_flags: ["--state", open", "--assignee", "@me"] # The flags to use when fetching issues from GitHub
 ```
 
 ### PR Description (Body)
