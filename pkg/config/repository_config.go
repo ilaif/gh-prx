@@ -225,7 +225,7 @@ func (c *CheckoutNewJiraConfig) SetDefaults() {
 		if c.Project != "" {
 			c.IssueJQL = fmt.Sprintf("project=%s+AND+", c.Project)
 		}
-		c.IssueJQL += "assignee=currentUser()+AND+status!=Done+ORDER+BY+updated+DESC"
+		c.IssueJQL += "assignee=currentUser()+AND+statusCategory!=Done+ORDER+BY+updated+DESC"
 	}
 }
 

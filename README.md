@@ -76,7 +76,7 @@ issue:
 checkout_new:
    jira:
       project: "" # The Jira project key to use when creating a new branch
-      issue_jql: "[<jira_project>+AND+]assignee=currentUser()+AND+status!=Done+ORDER+BY+updated+DESC" # The Jira JQL to use when fetching issues. <jira_project> is optional and will be replaced with the project key that is configured in the `project` field.
+      issue_jql: "[<jira_project>+AND+]assignee=currentUser()+AND+statusCategory!=Done+ORDER+BY+updated+DESC" # The Jira JQL to use when fetching issues. <jira_project> is optional and will be replaced with the project key that is configured in the `project` field.
    github:
       issue_list_flags: ["--state", open", "--assignee", "@me"] # The flags to use when fetching issues from GitHub
 ```
