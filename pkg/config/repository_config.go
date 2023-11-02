@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -57,12 +58,14 @@ type RepositoryConfig struct {
 	PR                        PullRequestConfig `yaml:"pr"`
 	Issue                     IssueConfig       `yaml:"issue"`
 	IgnorePullRequestTemplate *bool             `yaml:"ignore_pull_request_template"`
+	CheckoutNew               CheckoutNewConfig `yaml:"checkout_new"`
 }
 
 func (c *RepositoryConfig) SetDefaults() {
 	c.Branch.SetDefaults()
 	c.PR.SetDefaults()
 	c.Issue.SetDefaults()
+	c.CheckoutNew.SetDefaults()
 }
 
 func (c *RepositoryConfig) Validate() error {
@@ -199,6 +202,40 @@ func (c *PullRequestConfig) SetDefaults() {
 	if c.PushToRemote == nil {
 		trueVal := true
 		c.PushToRemote = &trueVal
+	}
+}
+
+type CheckoutNewConfig struct {
+	Jira   CheckoutNewJiraConfig   `yaml:"jira"`
+	GitHub CheckoutNewGitHubConfig `yaml:"github"`
+}
+
+func (c *CheckoutNewConfig) SetDefaults() {
+	c.Jira.SetDefaults()
+	c.GitHub.SetDefaults()
+}
+
+type CheckoutNewJiraConfig struct {
+	IssueJQL string `yaml:"issue_jql"`
+	Project  string `yaml:"project"`
+}
+
+func (c *CheckoutNewJiraConfig) SetDefaults() {
+	if c.IssueJQL == "" {
+		if c.Project != "" {
+			c.IssueJQL = fmt.Sprintf("project=%s+AND+", c.Project)
+		}
+		c.IssueJQL += "assignee=currentUser()+AND+statusCategory!=Done+ORDER+BY+updated+DESC"
+	}
+}
+
+type CheckoutNewGitHubConfig struct {
+	IssueListFlags []string `yaml:"issue_list_flags"`
+}
+
+func (c *CheckoutNewGitHubConfig) SetDefaults() {
+	if len(c.IssueListFlags) == 0 {
+		c.IssueListFlags = []string{"--state", "open", "--assignee", "@me"}
 	}
 }
 
