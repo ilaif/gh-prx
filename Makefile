@@ -6,8 +6,7 @@ help:
 .DEFAULT_GOAL := help
 
 ide-setup: ## Installs specific requirements for local development
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.49.0
-	go install gotest.tools/gotestsum@v1.8.2
+	go mod tidy
 	pre-commit install
 
 lint: ## Run lint

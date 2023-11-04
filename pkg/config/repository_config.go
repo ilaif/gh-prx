@@ -1,12 +1,14 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 
 	"dario.cat/mergo"
 	"github.com/caarlos0/log"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
@@ -48,7 +50,7 @@ var (
 		"Description": `.*`,
 	}
 	DefaultTokenSeparators = []string{"-", "_"}
-	Providers              = []string{"github", "jira"}
+	Providers              = []string{"github", "jira", "linear"}
 	DefaultProvider        = "github"
 	ErrInvalidProvider     = errors.New("Invalid provider")
 )
@@ -69,12 +71,18 @@ func (c *RepositoryConfig) SetDefaults() {
 }
 
 func (c *RepositoryConfig) Validate() error {
+	var merr *multierror.Error
+
 	if err := c.Branch.Validate(); err != nil {
-		return errors.Wrap(err, "branch")
+		merr = multierror.Append(merr, errors.Wrap(err, "branch"))
 	}
 
 	if err := c.Issue.Validate(); err != nil {
-		return errors.Wrap(err, "issue")
+		merr = multierror.Append(merr, errors.Wrap(err, "issue"))
+	}
+
+	if err := merr.ErrorOrNil(); err != nil {
+		return errors.Wrap(err, "Invalid repository config")
 	}
 
 	return nil
@@ -255,8 +263,11 @@ func LoadRepositoryConfig(globalRepoConfig RepositoryConfig) (*RepositoryConfig,
 
 	cfg.SetDefaults()
 
+	cfgBytes, _ := json.MarshalIndent(cfg, "", "  ")
+	log.Debug(fmt.Sprintf("Loaded repository config: %s", string(cfgBytes)))
+
 	if err := cfg.Validate(); err != nil {
-		return nil, errors.Wrap(err, "Invalid config")
+		return nil, err
 	}
 
 	return cfg, nil

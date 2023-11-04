@@ -27,10 +27,14 @@ type JiraIssueProvider struct {
 	CheckoutNewCfg config.CheckoutNewJiraConfig
 }
 
+func (p *JiraIssueProvider) Name() string {
+	return "Jira"
+}
+
 func (p *JiraIssueProvider) Get(ctx context.Context, id string) (*models.Issue, error) {
 	path := fmt.Sprintf("rest/api/3/issue/%s", id)
 	issue := &JiraIssue{}
-	if err := p.jiraGetRequest(ctx, path, issue); err != nil {
+	if err := p.getRequest(ctx, path, issue); err != nil {
 		return nil, err
 	}
 
@@ -40,7 +44,7 @@ func (p *JiraIssueProvider) Get(ctx context.Context, id string) (*models.Issue, 
 func (p *JiraIssueProvider) List(ctx context.Context) ([]*models.Issue, error) {
 	path := fmt.Sprintf("rest/api/3/search?jql=%s", p.CheckoutNewCfg.IssueJQL)
 	issues := &JiraIssues{}
-	if err := p.jiraGetRequest(ctx, path, issues); err != nil {
+	if err := p.getRequest(ctx, path, issues); err != nil {
 		return nil, err
 	}
 
@@ -83,7 +87,7 @@ func (i *JiraIssue) ToIssue() *models.Issue {
 	}
 }
 
-func (p *JiraIssueProvider) jiraGetRequest(ctx context.Context, path string, response any) error {
+func (p *JiraIssueProvider) getRequest(ctx context.Context, path string, response any) error {
 	url := fmt.Sprintf("%s/%s", p.Config.Endpoint, path)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)

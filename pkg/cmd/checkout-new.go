@@ -100,7 +100,10 @@ func checkoutNew(ctx context.Context, id string) error {
 }
 
 func chooseIssue(ctx context.Context, provider providers.IssueProvider) (string, error) {
-	s := utils.StartSpinner("Fetching issues from provider...", "Fetched issues from provider")
+	s := utils.StartSpinner(
+		fmt.Sprintf("Fetching issues from %s...", provider.Name()),
+		fmt.Sprintf("Fetched issues from %s", provider.Name()),
+	)
 	issues, err := provider.List(ctx)
 	s.Stop()
 	if err != nil {

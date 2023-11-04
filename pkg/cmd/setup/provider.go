@@ -15,6 +15,7 @@ type ProviderOpts struct {
 	Endpoint string
 	User     string
 	Token    string
+	APIKey   string
 }
 
 func NewProviderCmd() *cobra.Command {
@@ -35,9 +36,15 @@ func NewProviderCmd() *cobra.Command {
 				- %[1]suser%[1]s is your email address
 				- %[1]stoken%[1]s can be created at https://id.atlassian.com/manage-profile/security/api-tokens
 				- %[1]sendpoint%[1]s is your jira server: https://<your-jira-server>.atlassian.net
+			- linear:
+				- %[1]sapi_key%[1]s can be created at https://linear.app/settings/api
 		`, "`"),
 		Example: heredoc.Doc(`
+			// Setup a jira provider:
 			$ gh prx setup provider jira --user <email> --token <token>
+
+			// Setup a linear provider:
+			$ gh prx setup provider linear --api-key <api-key>
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
@@ -71,6 +78,12 @@ func setupProvider(_ context.Context, provider string, opts *ProviderOpts) error
 		cfg.JiraConfig.Endpoint = opts.Endpoint
 		cfg.JiraConfig.User = opts.User
 		cfg.JiraConfig.Token = opts.Token
+	case "linear":
+		if opts.APIKey == "" {
+			return errors.New("api-key is required for the linear provider setup")
+		}
+
+		cfg.LinearConfig.APIKey = opts.APIKey
 	default:
 		return config.ErrInvalidProvider
 	}
