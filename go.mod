@@ -11,7 +11,6 @@ require (
 	github.com/briandowns/spinner v1.23.0
 	github.com/caarlos0/log v0.4.4
 	github.com/cli/go-gh v1.2.1
-	github.com/davecgh/go-spew v1.1.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hasura/go-graphql-client v0.10.0
 	github.com/pkg/errors v0.9.1
@@ -30,6 +29,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.9.1 // indirect
 	github.com/cli/safeexec v1.0.1 // indirect
 	github.com/cli/shurcooL-graphql v0.0.4 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dnephin/pflag v1.0.7 // indirect
 	github.com/elliotchance/orderedmap/v2 v2.2.0 // indirect
 	github.com/fatih/color v1.15.0 // indirect
