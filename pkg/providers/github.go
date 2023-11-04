@@ -17,6 +17,9 @@ var (
 		"bug":           "fix",
 		"enhancement":   "feat",
 		"documentation": "docs",
+		"feature":       "feat",
+		"feat":          "feat",
+		"fix":           "fix",
 
 		"chore":    "chore",
 		"refactor": "refactor",
@@ -31,6 +34,10 @@ var (
 
 type GitHubIssueProvider struct {
 	CheckoutNewConfig config.CheckoutNewGitHubConfig
+}
+
+func (p *GitHubIssueProvider) Name() string {
+	return "GitHub"
 }
 
 func (p *GitHubIssueProvider) Get(_ context.Context, id string) (*models.Issue, error) {

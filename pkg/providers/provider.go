@@ -8,6 +8,7 @@ import (
 )
 
 type IssueProvider interface {
+	Name() string
 	Get(ctx context.Context, issue string) (*models.Issue, error)
 	List(ctx context.Context) ([]*models.Issue, error)
 }
@@ -26,6 +27,14 @@ func NewIssueProvider(cfg *config.RepositoryConfig, setupCfg *config.SetupConfig
 		return &JiraIssueProvider{
 			Config:         setupCfg.JiraConfig,
 			CheckoutNewCfg: cfg.CheckoutNew.Jira,
+		}, nil
+	case "linear":
+		if err := setupCfg.LinearConfig.Validate(); err != nil {
+			return nil, err
+		}
+
+		return &LinearIssueProvider{
+			Config: setupCfg.LinearConfig,
 		}, nil
 	default:
 		return nil, config.ErrInvalidProvider
