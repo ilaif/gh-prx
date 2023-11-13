@@ -8,15 +8,23 @@ A GitHub (`gh`) CLI extension to automate the daily work with **branches**, **co
 
 [Jump to installation](#installation)
 
-1. Checking out to an automatically generated branch:
+1. Checking out an automatically generated branch from issues:
+
+   ```sh
+   gh prx checkout-new
+   ```
+
+   <img src="https://github.com/ilaif/gh-prx/raw/main/assets/gh-prx-checkout-new.gif" width="700">
+
+2. Checking out an automatically generated branch based on an issue id:
 
     ```sh
     gh prx checkout-new 1234 # Where 1234 is the issue's key. If not provided, a list of issues will be prompted.
     ```
 
-   <img src="https://github.com/ilaif/gh-prx/raw/main/assets/gh-prx-checkout-new.gif" width="700">
+   <img src="https://github.com/ilaif/gh-prx/raw/main/assets/gh-prx-checkout-new-issue.gif" width="700">
 
-2. Creating a new PR with automatically generated title/body and checklist prompt:
+3. Creating a new PR with automatically generated title/body and checklist prompt:
 
     ```sh
     gh prx create
