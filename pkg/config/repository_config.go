@@ -46,7 +46,8 @@ var (
 	}
 	DefaultVariablePatterns = map[string]string{
 		"Type":        `fix|feat|chore|docs|refactor|test|style|build|ci|perf|revert`,
-		"Issue":       `[0-9]+`,
+		"Issue":       `([a-zA-Z]+\-)*[0-9]+`,
+		"Author":      `[a-zA-Z0-9]+`,
 		"Description": `.*`,
 	}
 	DefaultTokenSeparators = []string{"-", "_"}

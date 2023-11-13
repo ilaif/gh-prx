@@ -78,6 +78,7 @@ type LinearIssue struct {
 			Name string
 		}
 	}
+	BranchName string
 }
 
 func (i *LinearIssue) ToIssue() *models.Issue {
@@ -91,9 +92,10 @@ func (i *LinearIssue) ToIssue() *models.Issue {
 	}
 
 	return &models.Issue{
-		Key:   i.Identifier,
-		Title: i.Title,
-		Type:  issueType,
+		Key:                 i.Identifier,
+		Title:               i.Title,
+		Type:                issueType,
+		SuggestedBranchName: i.BranchName,
 	}
 }
 

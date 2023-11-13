@@ -83,9 +83,13 @@ func checkoutNew(ctx context.Context, id string) error {
 		return errors.Wrap(err, "Failed to get issue")
 	}
 
-	branchName, err := branch.TemplateBranchName(cfg, issue)
-	if err != nil {
-		return err
+	branchName := issue.SuggestedBranchName
+
+	if branchName == "" {
+		branchName, err = branch.TemplateBranchName(cfg, issue)
+		if err != nil {
+			return err
+		}
 	}
 
 	log.Debugf("Creating branch '%s' and checking out to it", branchName)
@@ -111,26 +115,24 @@ func chooseIssue(ctx context.Context, provider providers.IssueProvider) (string,
 	}
 
 	if len(issues) == 0 {
-		return "", errors.New("No issues found")
+		return "", errors.New("No issues found. Please make sure that you have issues that match the configured filter")
 	}
 
 	var i int
-	if err := survey.Ask([]*survey.Question{
-		{
-			Name: "issue",
-			Prompt: &survey.Select{
-				Message: "Select an issue:",
-				Options: lo.Map(issues, func(i *models.Issue, _ int) string {
-					issueType := ""
-					if i.Type != "" {
-						issueType = fmt.Sprintf("(%s) ", i.Type)
-					}
+	if err := survey.Ask([]*survey.Question{{
+		Name: "issue",
+		Prompt: &survey.Select{
+			Message: "Select an issue:",
+			Options: lo.Map(issues, func(i *models.Issue, _ int) string {
+				issueType := ""
+				if i.Type != "" {
+					issueType = fmt.Sprintf("(%s) ", i.Type)
+				}
 
-					return fmt.Sprintf("%s%s - %s", issueType, i.Key, i.Title)
-				}),
-			},
+				return fmt.Sprintf("%s%s - %s", issueType, i.Key, i.Title)
+			}),
 		},
-	}, &i); err != nil {
+	}}, &i); err != nil {
 		return "", errors.Wrap(err, "Failed to prompt for issue")
 	}
 

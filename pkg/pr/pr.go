@@ -23,11 +23,13 @@ var (
 		"docs": "documentation",
 	}
 
-	mdCheckboxMatcher         = regexp.MustCompile(`^\s*[\-\*]\s*\[(x|\s)\]`)
-	commitMsgSeparatorMatcher = regexp.MustCompile(`[\*\-]`)
+	mdCheckboxMatcher          = regexp.MustCompile(`^\s*[\-\*]\s*\[(x|\s)\]`)
+	commitMsgSeparatorMatcher  = regexp.MustCompile(`[\*\-]`)
+	mapHasNoEntryForKeyMatcher = regexp.MustCompile(`map has no entry for key "(.*)"`)
 )
 
 type CommitsFetcher func() ([]string, error)
+type AISummarizer func() (string, error)
 
 func TemplatePR(
 	b models.Branch,
@@ -36,24 +38,47 @@ func TemplatePR(
 	tokenSeparators []string,
 	commitsFetcher CommitsFetcher,
 	aiSummarizer func() (string, error),
-) (models.PullRequest, error) {
+) (*models.PullRequest, error) {
 	log.Debug("Templating PR")
 
 	funcMaps, err := utils.GenerateTemplateFunctions(tokenSeparators)
 	if err != nil {
-		return models.PullRequest{}, errors.Wrap(err, "Failed to generate template functions")
+		return nil, errors.Wrap(err, "Failed to generate template functions")
 	}
 
-	pr := models.PullRequest{}
+	pr := &models.PullRequest{}
 
 	res := bytes.Buffer{}
 	titleTpl, err := template.New("pr-title-tpl").Funcs(funcMaps).Parse(prCfg.Title)
 	if err != nil {
-		return models.PullRequest{}, errors.Wrap(err, "Failed to parse pr title template")
+		return nil, errors.Wrap(err, "Failed to parse pr title template")
 	}
-	if err := titleTpl.Option("missingkey=error").Execute(&res, b.Fields); err != nil {
-		return models.PullRequest{}, errors.Wrap(err, "Failed to template pr title")
+
+	for {
+		err := titleTpl.Option("missingkey=error").Execute(&res, b.Fields)
+		if err == nil {
+			break
+		}
+
+		matches := mapHasNoEntryForKeyMatcher.FindStringSubmatch(err.Error())
+
+		if len(matches) == 0 {
+			return nil, errors.Wrap(err, "Failed to template pr title")
+		}
+
+		log.Warn("Missing key in branch fields, prompting user to enter it manually")
+		answer := ""
+		if err := survey.AskOne(&survey.Input{
+			Message: "Enter value for " + matches[1],
+		}, &answer, survey.WithValidator(survey.Required)); err != nil {
+			return nil, errors.Wrap(err, "Failed to ask for missing field value")
+		}
+
+		b.Fields[matches[1]] = answer
+
+		continue
 	}
+
 	pr.Title = res.String()
 
 	bodyData := lo.Assign(b.Fields, make(map[string]any))
@@ -62,7 +87,7 @@ func TemplatePR(
 		log.Debug("Fetching commits")
 		commits, err := fetchCommits(prCfg.IgnoreCommitsPatterns, commitsFetcher)
 		if err != nil {
-			return models.PullRequest{}, err
+			return nil, err
 		}
 		bodyData["Commits"] = commits
 	}
@@ -70,7 +95,7 @@ func TemplatePR(
 	if strings.Contains(prCfg.Body, ".AISummary") {
 		aiSummary, err := aiSummarizer()
 		if err != nil {
-			return models.PullRequest{}, err
+			return nil, err
 		}
 		bodyData["AISummary"] = aiSummary
 	}
@@ -78,23 +103,25 @@ func TemplatePR(
 	res = bytes.Buffer{}
 	bodyTpl, err := template.New("pr-body-tpl").Funcs(funcMaps).Parse(prCfg.Body)
 	if err != nil {
-		return models.PullRequest{}, errors.Wrap(err, "Failed to parse pr body template")
+		return nil, errors.Wrap(err, "Failed to parse pr body template")
 	}
 	if err := bodyTpl.Option("missingkey=zero").Execute(&res, bodyData); err != nil {
-		return models.PullRequest{}, errors.Wrap(err, "Failed to template pr body")
+		return nil, errors.Wrap(err, "Failed to template pr body")
 	}
 	pr.Body = res.String()
 
 	if *prCfg.AnswerChecklist {
 		body, err := answerPRChecklist(pr.Body, confirm)
 		if err != nil {
-			return models.PullRequest{}, err
+			return nil, err
 		}
 		pr.Body = body
 	}
 
 	if typeAny, ok := b.Fields["Type"]; ok {
 		if typeStr, ok := typeAny.(string); ok {
+			typeStr = strings.ToLower(typeStr)
+
 			label, ok := TypeToLabel[typeStr]
 			if !ok {
 				label = typeStr

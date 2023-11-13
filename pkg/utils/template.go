@@ -8,6 +8,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func GenerateTemplateFunctions(tokenSeparators []string) (template.FuncMap, error) {
@@ -20,6 +22,15 @@ func GenerateTemplateFunctions(tokenSeparators []string) (template.FuncMap, erro
 	return template.FuncMap{
 		"humanize": func(text string) (string, error) {
 			return tokenMatcher.ReplaceAllString(text, " "), nil
+		},
+		"title": func(text string) (string, error) {
+			return cases.Title(language.English).String(text), nil
+		},
+		"lower": func(text string) (string, error) {
+			return strings.ToLower(text), nil
+		},
+		"upper": func(text string) (string, error) {
+			return strings.ToUpper(text), nil
 		},
 	}, nil
 }

@@ -36,7 +36,8 @@ Many of us find the terminal and CLI applications as our main toolkit.
 
 ## Features
 
-* Automatically creating new branches named based on issues fetched from project management tools (GitHub, and more in the future...)
+* Automatically creating new branches named based on issues fetched from project management tools
+  * Currently supported: GitHub, Jira, Linear
 * Extended PR creation:
   * Automatically push branch to origin
   * Parse branch names by a pattern into a customized PR title and description template
@@ -60,7 +61,8 @@ branch:
    pattern: "{{.Type}}\/({{.Issue}}-)?{{.Description}}" # Branch name pattern
    variable_patterns: # A map of patterns to match for each template variable
       Type: "fix|feat|chore|docs|refactor|test|style|build|ci|perf|revert"
-      Issue: "[0-9]+"
+      Issue: "([a-zA-Z]+\-)*[0-9]+"
+      Author: "[a-zA-Z0-9]+"
       Description: ".*"
    token_separators: ["-", "_"] # Characters used to separate branch name into a human-readable string
    max_length: 60 # Max characters to allow for branch length without prompting for changing it
@@ -79,6 +81,7 @@ checkout_new:
       issue_jql: "[<jira_project>+AND+]assignee=currentUser()+AND+statusCategory!=Done+ORDER+BY+updated+DESC" # The Jira JQL to use when fetching issues. <jira_project> is optional and will be replaced with the project key that is configured in the `project` field.
    github:
       issue_list_flags: ["--state", open", "--assignee", "@me"] # The flags to use when fetching issues from GitHub
+   # linear: # Due to Linear's GraphQL API, the issue list is not configurable. The default is: `assignedIssues(orderBy: updatedAt, filter: { state: { type: { neq: \"completed\" } } })`
 ```
 
 ### PR Description (Body)
@@ -132,6 +135,18 @@ Result:
 This is "my dashed string"
 ```
 
+`title`:
+
+Capitalizes the first letter of each word in a string.
+
+`lower`:
+
+Lower cases a string.
+
+`upper`:
+
+Upper cases a string.
+
 ### Special template variable names
 
 * `{{.Type}}` - Used to interpret GitHub labels to add to the PR and issue type to add the branch name.
@@ -144,7 +159,29 @@ This is "my dashed string"
 
 Just export your OpenAI key as an env var named `OPENAI_API_KEY` and you're good to go.
 
-To disable the AI summary, use the `--no-ai-summary` flag.
+If `OPENAI_API_KEY` is not set, the AI summary will not be used.
+
+To disable the AI summary explicitly, use the `--no-ai-summary` flag.
+
+## Providers
+
+There are currently 3 providers supported: GitHub, Jira and Linear.
+
+### GitHub
+
+The GitHub provider is the default provider and is configured simply by running `gh auth login`.
+
+### Jira
+
+To setup, run `gh prx setup provider jira --endpoint <endpoint> --user <email> --token <token>`.
+
+Alternatively, set the `JIRA_ENDPOINT`, `JIRA_USER` and `JIRA_TOKEN` env vars.
+
+### Linear
+
+To setup, run `gh prx setup provider linear --api-key <api-key>`.
+
+Alternatively, set the `LINEAR_API_KEY` env var.
 
 ## Installation
 

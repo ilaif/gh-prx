@@ -32,6 +32,17 @@ type JiraConfig struct {
 }
 
 func (c *JiraConfig) SetDefaults() {
+	if c.Endpoint == "" {
+		c.Endpoint = os.Getenv("JIRA_ENDPOINT")
+	}
+
+	if c.User == "" {
+		c.User = os.Getenv("JIRA_USER")
+	}
+
+	if c.Token == "" {
+		c.Token = os.Getenv("JIRA_TOKEN")
+	}
 }
 
 func (c *JiraConfig) Validate() error {
@@ -62,9 +73,7 @@ type LinearConfig struct {
 
 func (c *LinearConfig) SetDefaults() {
 	if c.APIKey == "" {
-		if apiKey := os.Getenv("LINEAR_API_KEY"); apiKey != "" {
-			c.APIKey = apiKey
-		}
+		c.APIKey = os.Getenv("LINEAR_API_KEY")
 	}
 }
 
