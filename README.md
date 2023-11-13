@@ -58,7 +58,7 @@ The default values for `.gh-prx.yaml` are:
 ```yaml
 branch:
    template: "{{.Type}}/{{with .Issue}}{{.}}-{{end}}{{.Description}}" # Branch name template
-   pattern: "{{.Type}}\/({{.Issue}}-)?{{.Description}}" # Branch name pattern
+   pattern: "{{.Type}}\\/({{.Issue}}-)?{{.Description}}" # Branch name pattern
    variable_patterns: # A map of patterns to match for each template variable
       Type: "fix|feat|chore|docs|refactor|test|style|build|ci|perf|revert"
       Issue: "([a-zA-Z]+\-)*[0-9]+"

@@ -1,7 +1,10 @@
 issue:
   provider: github
 branch:
+  pattern: "{{.Type}}\\/({{.Issue}}-)?{{.Description}}"
   variable_patterns:
     Type: "fix|feat|chore|docs|refactor|test|style|build|ci|perf|revert"
     Issue: "[0-9]+"
     Description: ".*"
+pr:
+  title: "{{.Type}}{{with .Issue}}({{.}}){{end}}: {{humanize .Description}}"
