@@ -142,7 +142,7 @@ func create(ctx context.Context, opts *CreateOpts) error {
 		base = strings.Trim(stdOut.String(), "\n")
 	}
 
-	if cfg.IgnorePullRequestTemplate != nil && *cfg.IgnorePullRequestTemplate {
+	if cfg.IgnorePullRequestTemplate == nil || !*cfg.IgnorePullRequestTemplate {
 		prTemplateBytes, err := utils.ReadFile(".github/pull_request_template.md")
 		if err == nil {
 			cfg.PR.Body = string(prTemplateBytes)
@@ -171,7 +171,9 @@ func create(ctx context.Context, opts *CreateOpts) error {
 		return err
 	}
 
+	log.Debug(fmt.Sprintf("Pull request title: %s", pr.Title))
 	log.Debug(fmt.Sprintf("Pull request body:\n\n%s", pr.Body))
+	log.Debug(fmt.Sprintf("Pull request labels: %v", pr.Labels))
 
 	if len(pr.Labels) > 0 {
 		if err := createLabels(pr.Labels); err != nil {
@@ -202,10 +204,10 @@ func createAISummary(ctx context.Context,
 	defer s.Stop()
 
 	gitDiffCmd := heredoc.Docf(`
-			git diff main --stat |
+			git diff %[1]s --stat |
 			grep '|' |
 			awk '{ if ($3 > 10) print $1 }' |
-			xargs git diff ^%s --ignore-all-space --ignore-blank-lines --ignore-space-change --unified=0 --word-diff --
+			xargs git diff ^%[1]s --ignore-all-space --ignore-blank-lines --ignore-space-change --unified=0 --word-diff --
 		`, base)
 	gitDiffOutput, err := utils.Exec("sh", "-c", gitDiffCmd)
 	if err != nil {

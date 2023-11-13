@@ -45,6 +45,8 @@ func ParseBranch(name string, cfg config.BranchConfig) (models.Branch, error) {
 		}
 	}
 
+	log.Debugf("Parsed branch: %+v", branch)
+
 	return branch, nil
 }
 
@@ -80,7 +82,7 @@ func TemplateBranchName(cfg *config.RepositoryConfig, issue *models.Issue) (stri
 	if len(name) > cfg.Branch.MaxLength {
 		var userReply bool
 		if err := survey.AskOne(&survey.Confirm{
-			Message: fmt.Sprintf("Branch name is too long, do you want to change it?\n>> %s", name),
+			Message: fmt.Sprintf("Branch name is somewhat long, do you want to change it?\n>> %s", name),
 		}, &userReply); err != nil {
 			return "", errors.Wrap(err, "Failed to prompt for branch name")
 		}

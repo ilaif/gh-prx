@@ -41,7 +41,7 @@ func NewProviderCmd() *cobra.Command {
 		`, "`"),
 		Example: heredoc.Doc(`
 			// Setup a jira provider:
-			$ gh prx setup provider jira --user <email> --token <token>
+			$ gh prx setup provider jira --endpoint <endpoint> --user <email> --token <token>
 
 			// Setup a linear provider:
 			$ gh prx setup provider linear --api-key <api-key>
@@ -57,6 +57,7 @@ func NewProviderCmd() *cobra.Command {
 	fl.StringVarP(&opts.Endpoint, "endpoint", "e", "", "Endpoint of the provider.")
 	fl.StringVarP(&opts.User, "user", "u", "", "The user to use for the provider.")
 	fl.StringVarP(&opts.Token, "token", "t", "", "The token to use for the provider.")
+	fl.StringVarP(&opts.APIKey, "api-key", "a", "", "The api-key to use for the provider.")
 
 	return cmd
 }
