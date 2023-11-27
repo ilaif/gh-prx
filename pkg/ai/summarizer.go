@@ -2,8 +2,10 @@ package ai
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/MakeNowJust/heredoc"
+	"github.com/caarlos0/log"
 	"github.com/pkg/errors"
 	"github.com/sashabaranov/go-openai"
 
@@ -14,8 +16,28 @@ func IsAISummarizerAvailable() bool {
 	return config.GetOpenAIApiKey() != ""
 }
 
-func SummarizeGitDiffOutput(ctx context.Context, diffOutput string) (string, error) {
+func SummarizeGitDiffOutput(ctx context.Context, diffOutput string, prBody string) (string, error) {
 	client := openai.NewClient(config.GetOpenAIApiKey())
+
+	userPrompt := heredoc.Docf(`Please summarize the pull request changes.
+
+		The git diff output for the PR:
+		'''
+		%s
+		'''
+
+		Structure your answer to conform with the following template:
+		'''
+		%s
+		'''
+
+		Please follow these guidelines:
+		- Do not repeat the commit summaries or the file summaries.
+		- Mention the file names that were changed, if applicable.
+		- Prefer bullet points over long sentences.
+	`, diffOutput, prBody)
+
+	log.Debug(fmt.Sprintf("Creating an AI-powered summary based on prompt:\n%s", userPrompt))
 
 	resp, err := client.CreateChatCompletion(ctx,
 		openai.ChatCompletionRequest{
@@ -28,17 +50,8 @@ func SummarizeGitDiffOutput(ctx context.Context, diffOutput string) (string, err
 						"You like making descriptions short and to the point.",
 				},
 				{
-					Role: openai.ChatMessageRoleUser,
-					Content: heredoc.Docf(`Please summarize the pull request.
-						Write your response in numbered points.
-						Write a high level description.
-						Do not repeat the commit summaries or the file summaries.
-						Write the most important bullet points.
-						The list should not be more than a few bullet points.
-						Mention the file names that were changed, if applicable.
-						The git diff changes for the PR:
-						%s
-					`, diffOutput),
+					Role:    openai.ChatMessageRoleUser,
+					Content: userPrompt,
 				},
 			},
 		},

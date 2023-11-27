@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/caarlos0/log"
@@ -22,8 +23,9 @@ import (
 type CreateOpts struct {
 	Confirm bool
 
-	WebMode     bool
-	RecoverFile string
+	WebMode          bool
+	NoMaintainerEdit bool
+	RecoverFile      string
 
 	IsDraft    bool
 	BaseBranch string
@@ -91,9 +93,9 @@ func NewCreateCmd() *cobra.Command {
 	fl.StringSliceVarP(&opts.Labels, "label", "l", nil, "Add labels by `name`")
 	fl.StringSliceVarP(&opts.Projects, "project", "p", nil, "Add the pull request to projects by `name`")
 	fl.StringVarP(&opts.Milestone, "milestone", "m", "", "Add the pull request to a milestone by `name`")
-	fl.Bool("no-maintainer-edit", false, "Disable maintainer's ability to modify pull request")
+	fl.BoolVar(&opts.NoMaintainerEdit, "no-maintainer-edit", false, "Disable maintainer's ability to modify pull request")
 	fl.StringVar(&opts.RecoverFile, "recover", "", "Recover input from a failed run of create")
-	fl.Bool("no-ai-summary", false, "Disable AI-powered summary")
+	fl.BoolVar(&opts.NoAISummary, "no-ai-summary", false, "Disable AI-powered summary")
 
 	return cmd
 }
@@ -131,15 +133,15 @@ func create(ctx context.Context, opts *CreateOpts) error {
 		log.Info(strings.Trim(gitDiffOutput, "\n"))
 	}
 
-	base := opts.BaseBranch
-	if base == "" {
+	baseBranch := opts.BaseBranch
+	if baseBranch == "" {
 		s := utils.StartSpinner("Fetching repository default branch...", "Fetched repository default branch")
 		stdOut, _, err := gh.Exec("repo", "view", "--json", "defaultBranchRef", "--jq", ".defaultBranchRef.name")
 		s.Stop()
 		if err != nil {
 			return errors.Wrap(err, "Failed to fetch default branch")
 		}
-		base = strings.Trim(stdOut.String(), "\n")
+		baseBranch = strings.Trim(stdOut.String(), "\n")
 	}
 
 	if cfg.IgnorePullRequestTemplate == nil || !*cfg.IgnorePullRequestTemplate {
@@ -149,24 +151,35 @@ func create(ctx context.Context, opts *CreateOpts) error {
 		}
 	}
 
-	commitsFetcher := func() ([]string, error) {
-		out, err := utils.Exec("git", "log", "--pretty=format:%s", "--no-merges", b.Original, "^"+base)
-		if err != nil {
-			return nil, errors.Wrap(err, "Failed to fetch branch commits")
-		}
-
-		return strings.Split(out, "\n"), nil
+	out, err := utils.Exec("git", "log", "--pretty=format:%s", "--no-merges", b.Original, "^"+baseBranch)
+	if err != nil {
+		return errors.Wrap(err, "Failed to fetch branch commits")
 	}
+	commits := strings.Split(out, "\n")
+	log.Debug(fmt.Sprintf("Commits:\n%s", strings.Join(commits, "\n")))
 
 	aiSummarizer := func() (string, error) {
 		if opts.NoAISummary || !ai.IsAISummarizerAvailable() {
+			log.Debug("AI-powered summary is disabled")
+
 			return "", nil
 		}
 
-		return createAISummary(ctx, base, commitsFetcher)
+		aiSummary, err := createAISummary(ctx, baseBranch, cfg.PR.Body, commits)
+		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				log.Warn("AI-powered summary timed out, skipping")
+
+				return "", nil
+			}
+
+			return "", err
+		}
+
+		return aiSummary, nil
 	}
 
-	pr, err := pr.TemplatePR(b, cfg.PR, opts.Confirm, cfg.Branch.TokenSeparators, commitsFetcher, aiSummarizer)
+	pr, err := pr.TemplatePR(b, cfg.PR, opts.Confirm, cfg.Branch.TokenSeparators, commits, aiSummarizer)
 	if err != nil {
 		return err
 	}
@@ -182,7 +195,7 @@ func create(ctx context.Context, opts *CreateOpts) error {
 	}
 
 	s := utils.StartSpinner("Creating pull request...", "Created pull request")
-	args := []string{"pr", "create", "--title", pr.Title, "--body", pr.Body, "--base", base}
+	args := []string{"pr", "create", "--title", pr.Title, "--body", pr.Body, "--base", baseBranch}
 	args = append(args, generatePrCreateArgsFromOpts(opts, pr.Labels)...)
 	stdOut, _, err := gh.Exec(args...)
 	s.Stop()
@@ -195,35 +208,33 @@ func create(ctx context.Context, opts *CreateOpts) error {
 }
 
 func createAISummary(ctx context.Context,
-	base string,
-	commitsFetcher func() ([]string, error),
+	baseBranch string,
+	prBody string,
+	commits []string,
 ) (string, error) {
 	aiSummary := ""
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
 
 	s := utils.StartSpinner("Creating an AI-powered summary", "Finished summarizing")
 	defer s.Stop()
 
 	gitDiffCmd := heredoc.Docf(`
-			git diff %[1]s --stat |
+			git diff %[1]s --stat=10000 |
 			grep '|' |
 			awk '{ if ($3 > 10) print $1 }' |
 			xargs git diff ^%[1]s --ignore-all-space --ignore-blank-lines --ignore-space-change --unified=0 --word-diff --
-		`, base)
+		`, baseBranch)
 	gitDiffOutput, err := utils.Exec("sh", "-c", gitDiffCmd)
 	if err != nil {
 		return "", errors.Wrap(err, "Failed to fetch branch commits")
 	}
 
-	aiSummary, err = ai.SummarizeGitDiffOutput(ctx, gitDiffOutput)
+	aiSummary, err = ai.SummarizeGitDiffOutput(ctx, gitDiffOutput, prBody)
 	if err != nil {
-		// Fallback to file and commit diff
-
-		commits, err := commitsFetcher()
-		if err != nil {
-			return "", err
-		}
-
-		aiSummary, err = ai.SummarizeGitDiffOutput(ctx, strings.Join(commits, "\n"))
+		log.Debug("Failed to summarize git diff output, falling back to file and commit diff")
+		aiSummary, err = ai.SummarizeGitDiffOutput(ctx, strings.Join(commits, "\n"), prBody)
 		if err != nil {
 			return "", err
 		}
@@ -284,6 +295,9 @@ func generatePrCreateArgsFromOpts(opts *CreateOpts, labels []string) []string {
 	}
 	if opts.WebMode {
 		args = append(args, "--web")
+	}
+	if opts.NoMaintainerEdit {
+		args = append(args, "--no-maintainer-edit")
 	}
 	if opts.RecoverFile != "" {
 		args = append(args, "--recover", opts.RecoverFile)
