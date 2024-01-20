@@ -248,7 +248,7 @@ func (c *CheckoutNewGitHubConfig) SetDefaults() {
 	}
 }
 
-func LoadRepositoryConfig(globalRepoConfig RepositoryConfig) (*RepositoryConfig, error) {
+func LoadRepositoryConfig(globalRepoConfig *RepositoryConfig) (*RepositoryConfig, error) {
 	cfg := &RepositoryConfig{}
 	if err := utils.ReadYaml(DefaultConfigFilepath, cfg); err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
@@ -258,8 +258,10 @@ func LoadRepositoryConfig(globalRepoConfig RepositoryConfig) (*RepositoryConfig,
 		log.Infof("No config file found at '%s', using defaults", DefaultConfigFilepath)
 	}
 
-	if err := mergo.Merge(cfg, globalRepoConfig); err != nil {
-		return nil, errors.Wrap(err, "Failed to merge global config to repository config")
+	if globalRepoConfig != nil {
+		if err := mergo.Merge(cfg, globalRepoConfig); err != nil {
+			return nil, errors.Wrap(err, "Failed to merge global config to repository config")
+		}
 	}
 
 	cfg.SetDefaults()

@@ -23,7 +23,7 @@ var (
 )
 
 type JiraIssueProvider struct {
-	Config         config.JiraConfig
+	Config         *config.JiraConfig
 	CheckoutNewCfg config.CheckoutNewJiraConfig
 }
 

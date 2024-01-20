@@ -19,8 +19,7 @@ const (
 )
 
 type LinearIssueProvider struct {
-	Config config.LinearConfig
-	// CheckoutNewCfg config.CheckoutNewJiraConfig
+	Config *config.LinearConfig
 }
 
 func (p *LinearIssueProvider) Name() string {
