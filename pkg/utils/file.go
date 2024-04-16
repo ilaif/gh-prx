@@ -56,3 +56,34 @@ func WriteYaml(filename string, data interface{}) error {
 
 	return nil
 }
+
+// FindRelativePathInRepo traverses up from the current directory recursively until a relative path is found.
+// It returns the first relative path found, or os.ErrNotExists if no relative path is found.
+func FindRelativePathInRepo(path string) (string, error) {
+	// Get the current working directory
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return "", errors.Wrap(err, "Failed to get current working directory")
+	}
+
+	// Start traversing up from the current directory
+	for {
+		// Check if the current directory contains a relative path
+		if _, err := os.Stat(filepath.Join(currentDir, path)); err == nil {
+			return filepath.Join(currentDir, path), nil
+		}
+
+		// Move up to the parent directory
+		parentDir := filepath.Dir(currentDir)
+
+		// Check if we have reached the git root directory
+		if _, err := os.Stat(filepath.Join(currentDir, ".git")); err == nil {
+			break // Break the loop if we have reached the git root directory
+		}
+
+		// Update the current directory to the parent directory
+		currentDir = parentDir
+	}
+
+	return "", os.ErrNotExist // Return an error if no relative path is found
+}

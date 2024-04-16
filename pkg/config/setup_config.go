@@ -109,6 +109,7 @@ func LoadSetupConfig() (*SetupConfig, error) {
 		if os.IsNotExist(err) {
 			cfg := &SetupConfig{}
 			cfg.SetDefaults()
+
 			return cfg, nil
 		}
 
