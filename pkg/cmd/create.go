@@ -67,7 +67,7 @@ func NewCreateCmd() *cobra.Command {
 		`),
 		Aliases: []string{"new"},
 		Args:    cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			return create(cmd.Context(), opts)
 		},
 	}
