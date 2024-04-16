@@ -49,20 +49,20 @@ func TemplatePR(
 
 	pr := &models.PullRequest{}
 
-	res := bytes.Buffer{}
+	var res bytes.Buffer
 	titleTpl, err := template.New("pr-title-tpl").Funcs(funcMaps).Parse(prCfg.Title)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to parse pr title template")
 	}
 
 	for {
+		res = bytes.Buffer{}
 		err := titleTpl.Option("missingkey=error").Execute(&res, b.Fields)
 		if err == nil {
 			break
 		}
 
 		matches := mapHasNoEntryForKeyMatcher.FindStringSubmatch(err.Error())
-
 		if len(matches) == 0 {
 			return nil, errors.Wrap(err, "Failed to template pr title")
 		}
@@ -76,8 +76,6 @@ func TemplatePR(
 		}
 
 		b.Fields[matches[1]] = answer
-
-		continue
 	}
 
 	pr.Title = res.String()

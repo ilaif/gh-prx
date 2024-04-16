@@ -38,6 +38,8 @@ type CreateOpts struct {
 	Milestone string
 
 	NoAISummary bool
+
+	DryRun bool
 }
 
 func NewCreateCmd() *cobra.Command {
@@ -96,6 +98,7 @@ func NewCreateCmd() *cobra.Command {
 	fl.BoolVar(&opts.NoMaintainerEdit, "no-maintainer-edit", false, "Disable maintainer's ability to modify pull request")
 	fl.StringVar(&opts.RecoverFile, "recover", "", "Recover input from a failed run of create")
 	fl.BoolVar(&opts.NoAISummary, "no-ai-summary", false, "Disable AI-powered summary")
+	fl.BoolVar(&opts.DryRun, "dry-run", false, "Print the pull request body and title without creating the pull request")
 
 	return cmd
 }
@@ -192,6 +195,12 @@ func create(ctx context.Context, opts *CreateOpts) error {
 		if err := createLabels(pr.Labels); err != nil {
 			return err
 		}
+	}
+
+	if opts.DryRun {
+		log.Info("Dry run enabled, skipping pull request creation")
+
+		return nil
 	}
 
 	s := utils.StartSpinner("Creating pull request...", "Created pull request")
