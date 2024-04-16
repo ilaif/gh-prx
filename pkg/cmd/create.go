@@ -148,16 +148,15 @@ func create(ctx context.Context, opts *CreateOpts) error {
 	}
 
 	if cfg.PullRequestTemplatePath != "" {
-		prTemplateBytes, err := utils.ReadFile(cfg.PullRequestTemplatePath)
+		prTemplatePath, err := utils.FindRelativePathInRepo(cfg.PullRequestTemplatePath)
+		if err != nil {
+			return errors.Wrap(err, "Failed to find pull request template path")
+		}
+		prTemplateBytes, err := utils.ReadFile(prTemplatePath)
 		if err != nil {
 			return errors.Wrap(err, "Failed to read pull request template")
 		}
 		cfg.PR.Body = string(prTemplateBytes)
-	} else if cfg.IgnorePullRequestTemplate == nil || !*cfg.IgnorePullRequestTemplate {
-		prTemplateBytes, err := utils.ReadFile(".github/pull_request_template.md")
-		if err == nil {
-			cfg.PR.Body = string(prTemplateBytes)
-		}
 	}
 
 	out, err := utils.Exec("git", "log", "--pretty=format:%s", "--no-merges", b.Original, "^"+baseBranch)
@@ -197,16 +196,16 @@ func create(ctx context.Context, opts *CreateOpts) error {
 	log.Debug(fmt.Sprintf("Pull request body:\n\n%s", pr.Body))
 	log.Debug(fmt.Sprintf("Pull request labels: %v", pr.Labels))
 
-	if len(pr.Labels) > 0 {
-		if err := createLabels(pr.Labels); err != nil {
-			return err
-		}
-	}
-
 	if opts.DryRun {
 		log.Info("Dry run enabled, skipping pull request creation")
 
 		return nil
+	}
+
+	if len(pr.Labels) > 0 {
+		if err := createLabels(pr.Labels); err != nil {
+			return err
+		}
 	}
 
 	s := utils.StartSpinner("Creating pull request...", "Created pull request")

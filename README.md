@@ -82,8 +82,6 @@ pr:
 issue:
    provider: github # The provider to use for fetching issue details (supported: github,jira,linear)
    types: ["fix", "feat", "chore", "docs", "refactor", "test", "style", "build", "ci", "perf", "revert"] # The issue types to prompt the user when creating a new branch
-   pull_request_template_path: "./pull_request_template.md" # The pull request template file to use when creating a new PR. Relative to the .gh-prx.yaml file location.
-   ignore_pull_request_template: false # If true, the pull request template in the repository will be ignored.
 checkout_new:
    jira:
       project: "" # The Jira project key to use when creating a new branch
@@ -91,11 +89,12 @@ checkout_new:
    github:
       issue_list_flags: ["--state", open", "--assignee", "@me"] # The flags to use when fetching issues from GitHub
    # linear: # Due to Linear's GraphQL API, the issue list is not configurable. The default is: `assignedIssues(orderBy: updatedAt, filter: { state: { type: { neq: \"completed\" } } })`
+pull_request_template_path: "./pull_request_template.md" # The pull request template file to use when creating a new PR. Relative to the repository root.
 ```
 
 ### PR Description (Body)
 
-The PR description is based on the repo's `.github/pull_request_template.md`. If this file does not exist, a default template is used:
+The PR description is based on the `pull_request_template_path` variable which defaults to the repo's `.github/pull_request_template.md`. If this file does not exist, a default template is used:
 
 ```markdown
 {{with .Issue}}Closes #{{.}}.

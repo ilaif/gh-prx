@@ -57,12 +57,11 @@ var (
 )
 
 type RepositoryConfig struct {
-	Branch                    BranchConfig      `yaml:"branch"`
-	PR                        PullRequestConfig `yaml:"pr"`
-	Issue                     IssueConfig       `yaml:"issue"`
-	PullRequestTemplatePath   string            `yaml:"pull_request_template_path"`
-	IgnorePullRequestTemplate *bool             `yaml:"ignore_pull_request_template"`
-	CheckoutNew               CheckoutNewConfig `yaml:"checkout_new"`
+	Branch                  BranchConfig      `yaml:"branch"`
+	PR                      PullRequestConfig `yaml:"pr"`
+	Issue                   IssueConfig       `yaml:"issue"`
+	CheckoutNew             CheckoutNewConfig `yaml:"checkout_new"`
+	PullRequestTemplatePath string            `yaml:"pull_request_template_path"`
 }
 
 func (c *RepositoryConfig) SetDefaults() {
@@ -70,6 +69,10 @@ func (c *RepositoryConfig) SetDefaults() {
 	c.PR.SetDefaults()
 	c.Issue.SetDefaults()
 	c.CheckoutNew.SetDefaults()
+
+	if c.PullRequestTemplatePath == "" {
+		c.PullRequestTemplatePath = ".github/pull_request_template.md"
+	}
 }
 
 func (c *RepositoryConfig) Validate() error {
@@ -251,12 +254,17 @@ func (c *CheckoutNewGitHubConfig) SetDefaults() {
 
 func LoadRepositoryConfig(globalRepoConfig *RepositoryConfig) (*RepositoryConfig, error) {
 	cfg := &RepositoryConfig{}
-	if err := utils.ReadYaml(DefaultConfigFilepath, cfg); err != nil {
+
+	if actualConfigFilepath, err := utils.FindRelativePathInRepo(DefaultConfigFilepath); err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return nil, errors.Wrap(err, "Failed to load config")
 		}
-
 		log.Infof("No config file found at '%s', using defaults", DefaultConfigFilepath)
+	} else {
+		log.Debug(fmt.Sprintf("Loading repository config from '%s'", actualConfigFilepath))
+		if err := utils.ReadYaml(actualConfigFilepath, cfg); err != nil {
+			return nil, errors.Wrap(err, "Failed to load config")
+		}
 	}
 
 	if globalRepoConfig != nil {
