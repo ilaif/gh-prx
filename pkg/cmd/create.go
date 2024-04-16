@@ -147,7 +147,13 @@ func create(ctx context.Context, opts *CreateOpts) error {
 		baseBranch = strings.Trim(stdOut.String(), "\n")
 	}
 
-	if cfg.IgnorePullRequestTemplate == nil || !*cfg.IgnorePullRequestTemplate {
+	if cfg.PullRequestTemplatePath != "" {
+		prTemplateBytes, err := utils.ReadFile(cfg.PullRequestTemplatePath)
+		if err != nil {
+			return errors.Wrap(err, "Failed to read pull request template")
+		}
+		cfg.PR.Body = string(prTemplateBytes)
+	} else if cfg.IgnorePullRequestTemplate == nil || !*cfg.IgnorePullRequestTemplate {
 		prTemplateBytes, err := utils.ReadFile(".github/pull_request_template.md")
 		if err == nil {
 			cfg.PR.Body = string(prTemplateBytes)

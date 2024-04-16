@@ -60,6 +60,7 @@ type RepositoryConfig struct {
 	Branch                    BranchConfig      `yaml:"branch"`
 	PR                        PullRequestConfig `yaml:"pr"`
 	Issue                     IssueConfig       `yaml:"issue"`
+	PullRequestTemplatePath   string            `yaml:"pull_request_template_path"`
 	IgnorePullRequestTemplate *bool             `yaml:"ignore_pull_request_template"`
 	CheckoutNew               CheckoutNewConfig `yaml:"checkout_new"`
 }
