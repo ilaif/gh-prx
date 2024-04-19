@@ -275,7 +275,10 @@ func LoadRepositoryConfig(globalRepoConfig *RepositoryConfig) (*RepositoryConfig
 
 	cfg.SetDefaults()
 
-	cfgBytes, _ := json.MarshalIndent(cfg, "", "  ")
+	cfgBytes, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to marshal config")
+	}
 	log.Debug(fmt.Sprintf("Loaded repository config: %s", string(cfgBytes)))
 
 	if err := cfg.Validate(); err != nil {

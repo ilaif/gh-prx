@@ -8,9 +8,7 @@ import (
 	"github.com/ilaif/gh-prx/pkg/cmd"
 )
 
-var (
-	version = "dev"
-)
+var version = "dev"
 
 func main() {
 	cmd.Execute(buildVersion(version))

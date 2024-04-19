@@ -10,7 +10,7 @@ ide-setup: ## Installs specific requirements for local development
 	pre-commit install
 
 lint: ## Run lint
-	golangci-lint run ./...
+	golangci-lint run --fix ./...
 
 test: ## Run unit tests
 	go test -short ./...
@@ -23,9 +23,9 @@ build: ## Build the binary
 	go build ./
 
 install-extension-local: build ## Installs the extension locally
-	gh extension remove prx
+	gh extension remove prx || true
 	gh extension install .
 
 install-extension-remote: ## Installs the extension remotely
-	gh extension remove prx
-	gh extension install prx
+	gh extension remove prx || true
+	gh extension install ilaif/gh-prx

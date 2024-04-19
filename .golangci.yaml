@@ -1,35 +1,135 @@
+run:
+  timeout: 3m
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-dirs: [tmp]
 linters:
   disable-all: true
   enable:
-    # fast linters:
-    - goimports
-    - gocyclo
-    - goconst
-    - misspell
-    - ineffassign
-    - lll
-    - gci
-    - nlreturn
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - containedctx
+    - contextcheck
+    # - copyloopvar # waiting a bit for go1.22
+    - cyclop
+    - decorder
+    - dogsled
+    - dupl
+    - dupword
+    - durationcheck
+    - errcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - execinquery
+    - exhaustive
+    - exportloopref
     - forbidigo
-    - reassign
-    # slow linters:
+    - forcetypeassert
+    - gci
+    - gocheckcompilerdirectives
+    - gochecknoinits
+    - gochecksumtype
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - godox
+    - goerr113
+    - gofmt
+    - gofumpt
+    - goheader
+    - goimports
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
     - gosec
     - gosimple
+    - gosmopolitan
     - govet
-    - errcheck
-    - gocritic
+    - grouper
     - importas
+    - inamedparam
+    - ineffassign
+    - interfacebloat
+    - intrange
+    - lll
+    - loggercheck
+    - maintidx
+    - makezero
+    - mirror
+    - misspell
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - nlreturn
+    - noctx
+    - nonamedreturns
+    - nosprintfhostport
+    - prealloc
+    - predeclared
+    - promlinter
+    - protogetter
+    - reassign
     - revive
-    - typecheck
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - staticcheck
+    - stylecheck
+    - tagalign
+    - tenv
+    - testableexamples
+    - testpackage
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
     - unused
+    - usestdlibvars
+    - wastedassign
+    - whitespace
     - wrapcheck
+    # - zerologlint # not using zerolog
+    # Disabled linters that we don't want
+    # - deadcode
+    # - depguard
+    # - exhaustivestruct
+    # - exhaustruct
+    # - funlen
+    # - ginkgolinter
+    # - gochecknoglobals
+    # - golint
+    # - gomnd
+    # - ifshort
+    # - interfacer
+    # - ireturn
+    # - maligned
+    # - musttag
+    # - nolintlint
+    # - nosnakecase
+    # - paralleltest
+    # - perfsprint
+    # - scopelint
+    # - sqlclosecheck
+    # - structcheck
+    # - tagliatelle
+    # - testifylint
+    # - varcheck
+    # - varnamelen
+    # - wsl
+    # - zerologlint
+
 linters-settings:
   forbidigo: { forbid: ['fmt\.Errorf.*'] }
   gci: { sections: [standard, default, prefix(github.com/ilaif/gh-prx)] }
   wrapcheck: { ignorePackageGlobs: ["github.com/ilaif/gh-prx/**"] }
-issues:
-  max-issues-per-linter: 0
-  max-same-issues: 0
-run:
-  timeout: 3m
-  skip-dirs: [tmp]
+  cyclop:
+    skip-tests: true
+    max-complexity: 20
+    package-average: 0

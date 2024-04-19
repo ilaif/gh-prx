@@ -12,12 +12,12 @@ import (
 )
 
 type SetupConfig struct {
-	JiraConfig   *JiraConfig   `yaml:"jira"`
-	LinearConfig *LinearConfig `yaml:"linear"`
+	JiraConfig   *JiraConfig   `yaml:"jira,omitempty"`
+	LinearConfig *LinearConfig `yaml:"linear,omitempty"`
 
 	// RepositoryConfig a global config for all repositories.
 	// Per-repository config properties will override this one.
-	RepositoryConfig *RepositoryConfig `yaml:"global"`
+	RepositoryConfig *RepositoryConfig `yaml:"global,omitempty"`
 }
 
 func (c *SetupConfig) SetDefaults() {
@@ -25,6 +25,7 @@ func (c *SetupConfig) SetDefaults() {
 		c.JiraConfig = &JiraConfig{}
 	}
 	c.JiraConfig.SetDefaults()
+
 	if c.LinearConfig == nil {
 		c.LinearConfig = &LinearConfig{}
 	}
@@ -32,20 +33,18 @@ func (c *SetupConfig) SetDefaults() {
 }
 
 type JiraConfig struct {
-	Endpoint string `yaml:"endpoint"`
-	User     string `yaml:"user"`
-	Token    string `yaml:"token"`
+	Endpoint string `yaml:"endpoint,omitempty"`
+	User     string `yaml:"user,omitempty"`
+	Token    string `yaml:"token,omitempty"`
 }
 
 func (c *JiraConfig) SetDefaults() {
 	if c.Endpoint == "" {
 		c.Endpoint = os.Getenv("JIRA_ENDPOINT")
 	}
-
 	if c.User == "" {
 		c.User = os.Getenv("JIRA_USER")
 	}
-
 	if c.Token == "" {
 		c.Token = os.Getenv("JIRA_TOKEN")
 	}
@@ -53,19 +52,15 @@ func (c *JiraConfig) SetDefaults() {
 
 func (c *JiraConfig) Validate() error {
 	var merr *multierror.Error
-
 	if c.Endpoint == "" {
 		merr = multierror.Append(merr, errors.New("Jira endpoint is missing"))
 	}
-
 	if c.User == "" {
 		merr = multierror.Append(merr, errors.New("Jira user is missing"))
 	}
-
 	if c.Token == "" {
 		merr = multierror.Append(merr, errors.New("Jira token is missing"))
 	}
-
 	if err := merr.ErrorOrNil(); err != nil {
 		return errors.Wrap(err, "Invalid Jira config, please run 'gh prx setup provider jira'")
 	}
@@ -85,11 +80,9 @@ func (c *LinearConfig) SetDefaults() {
 
 func (c *LinearConfig) Validate() error {
 	var merr *multierror.Error
-
 	if c.APIKey == "" {
 		merr = multierror.Append(merr, errors.New("Linear API key is missing"))
 	}
-
 	if err := merr.ErrorOrNil(); err != nil {
 		return errors.Wrap(err, "Invalid Linear config, please run 'gh prx setup provider linear'")
 	}

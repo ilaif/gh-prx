@@ -3,7 +3,6 @@ package providers
 import (
 	"context"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -104,7 +103,7 @@ func (p *LinearIssueProvider) query(ctx context.Context, query any, vars map[str
 	}
 	client := graphql.NewClient("https://api.linear.app/graphql", httpClient)
 	client = client.WithRequestModifier(func(req *http.Request) {
-		req.Header.Set("Authorization", os.Getenv("LINEAR_API_KEY"))
+		req.Header.Set("Authorization", p.Config.APIKey)
 	})
 
 	err := client.Query(ctx, query, vars)

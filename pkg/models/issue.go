@@ -5,9 +5,7 @@ import (
 	"strings"
 )
 
-var (
-	InvalidTitleCharsMatcher = regexp.MustCompile(`[^.a-zA-Z0-9]`)
-)
+var InvalidTitleCharsMatcher = regexp.MustCompile(`[^.a-zA-Z0-9]`)
 
 type Issue struct {
 	Key                 string

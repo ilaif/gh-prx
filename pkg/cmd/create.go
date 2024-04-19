@@ -103,7 +103,7 @@ func NewCreateCmd() *cobra.Command {
 	return cmd
 }
 
-func create(ctx context.Context, opts *CreateOpts) error {
+func create(ctx context.Context, opts *CreateOpts) error { // nolint:cyclop
 	setupCfg, err := config.LoadSetupConfig()
 	if err != nil {
 		return err
@@ -226,8 +226,6 @@ func createAISummary(ctx context.Context,
 	prBody string,
 	commits []string,
 ) (string, error) {
-	aiSummary := ""
-
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -245,7 +243,7 @@ func createAISummary(ctx context.Context,
 		return "", errors.Wrap(err, "Failed to fetch branch commits")
 	}
 
-	aiSummary, err = ai.SummarizeGitDiffOutput(ctx, gitDiffOutput, prBody)
+	aiSummary, err := ai.SummarizeGitDiffOutput(ctx, gitDiffOutput, prBody)
 	if err != nil {
 		log.Debug("Failed to summarize git diff output, falling back to file and commit diff")
 		aiSummary, err = ai.SummarizeGitDiffOutput(ctx, strings.Join(commits, "\n"), prBody)
@@ -264,7 +262,6 @@ func createLabels(labels []string) error {
 	g := errgroup.Group{}
 	for _, label := range labels {
 		label := label
-
 		g.Go(func() error {
 			_, stdErr, err := gh.Exec("label", "create", label)
 			if err != nil {

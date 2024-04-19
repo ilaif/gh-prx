@@ -21,11 +21,9 @@ func Execute(version string) {
 }
 
 func NewRootCmd(version string) *cobra.Command {
-	var (
-		debug bool
-	)
+	var debug bool
 
-	var rootCmd = &cobra.Command{
+	rootCmd := &cobra.Command{
 		Use:           "prx",
 		Short:         "Extended Git & GitHub CLI flows",
 		SilenceUsage:  true,

@@ -23,7 +23,7 @@ func ReadFile(filename string) ([]byte, error) {
 }
 
 func WriteFile(filename string, content []byte) error {
-	if err := os.WriteFile(filename, content, 0600); err != nil {
+	if err := os.WriteFile(filename, content, 0o600); err != nil {
 		return errors.Wrapf(err, "Failed to write to file '%s'", filename)
 	}
 

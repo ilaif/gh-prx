@@ -12,25 +12,23 @@ import (
 	"github.com/ilaif/gh-prx/pkg/models"
 )
 
-var (
-	LabelToType = map[string]string{
-		"bug":           "fix",
-		"enhancement":   "feat",
-		"documentation": "docs",
-		"feature":       "feat",
-		"feat":          "feat",
-		"fix":           "fix",
+var LabelToType = map[string]string{
+	"bug":           "fix",
+	"enhancement":   "feat",
+	"documentation": "docs",
+	"feature":       "feat",
+	"feat":          "feat",
+	"fix":           "fix",
 
-		"chore":    "chore",
-		"refactor": "refactor",
-		"test":     "test",
-		"ci":       "ci",
-		"perf":     "perf",
-		"build":    "build",
-		"revert":   "revert",
-		"style":    "style",
-	}
-)
+	"chore":    "chore",
+	"refactor": "refactor",
+	"test":     "test",
+	"ci":       "ci",
+	"perf":     "perf",
+	"build":    "build",
+	"revert":   "revert",
+	"style":    "style",
+}
 
 type GitHubIssueProvider struct {
 	CheckoutNewConfig config.CheckoutNewGitHubConfig
