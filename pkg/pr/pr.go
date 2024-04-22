@@ -128,8 +128,10 @@ func TemplatePR(
 			if !ok {
 				label = typeStr
 			}
-
-			pr.Labels = append(pr.Labels, label)
+			// Ensure we don't add an empty label
+			if label != "" {
+				pr.Labels = append(pr.Labels, label)
+			}	
 		}
 	}
 
