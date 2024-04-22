@@ -29,7 +29,7 @@ func NewProviderCmd() *cobra.Command {
 		Long: heredoc.Docf(`
 			Setup a provider. A provider is a service that hosts issues.
 
-			Currently supported providers are:
+			Supported providers:
 			- github:
 				- Configured by running %[1]sgh auth login%[1]s
 			- jira:

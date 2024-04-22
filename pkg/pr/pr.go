@@ -18,9 +18,11 @@ import (
 
 var (
 	TypeToLabel = map[string]string{
-		"fix":  "bug",
-		"feat": "enhancement",
-		"docs": "documentation",
+		"fix":     "bug",
+		"feat":    "enhancement",
+		"feature": "enhancement",
+		"docs":    "documentation",
+		"task":    "chore",
 	}
 
 	mdCheckboxMatcher          = regexp.MustCompile(`^\s*[\-\*]\s*\[(x|\s)\]`)
@@ -28,7 +30,6 @@ var (
 	mapHasNoEntryForKeyMatcher = regexp.MustCompile(`map has no entry for key "(.*)"`)
 )
 
-type CommitsFetcher func() ([]string, error)
 type AISummarizer func() (string, error)
 
 func TemplatePR(
@@ -36,7 +37,7 @@ func TemplatePR(
 	prCfg config.PullRequestConfig,
 	confirm bool,
 	tokenSeparators []string,
-	commitsFetcher CommitsFetcher,
+	commits []string,
 	aiSummarizer func() (string, error),
 ) (*models.PullRequest, error) {
 	log.Debug("Templating PR")
@@ -48,20 +49,20 @@ func TemplatePR(
 
 	pr := &models.PullRequest{}
 
-	res := bytes.Buffer{}
+	var res bytes.Buffer
 	titleTpl, err := template.New("pr-title-tpl").Funcs(funcMaps).Parse(prCfg.Title)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to parse pr title template")
 	}
 
 	for {
+		res = bytes.Buffer{}
 		err := titleTpl.Option("missingkey=error").Execute(&res, b.Fields)
 		if err == nil {
 			break
 		}
 
 		matches := mapHasNoEntryForKeyMatcher.FindStringSubmatch(err.Error())
-
 		if len(matches) == 0 {
 			return nil, errors.Wrap(err, "Failed to template pr title")
 		}
@@ -75,33 +76,34 @@ func TemplatePR(
 		}
 
 		b.Fields[matches[1]] = answer
-
-		continue
 	}
 
 	pr.Title = res.String()
 
 	bodyData := lo.Assign(b.Fields, make(map[string]any))
+	prBody := prCfg.Body
 
-	if strings.Contains(prCfg.Body, ".Commits") {
-		log.Debug("Fetching commits")
-		commits, err := fetchCommits(prCfg.IgnoreCommitsPatterns, commitsFetcher)
+	if strings.Contains(prBody, ".Commits") {
+		commits, err := processCommits(prCfg.IgnoreCommitsPatterns, commits)
 		if err != nil {
 			return nil, err
 		}
 		bodyData["Commits"] = commits
 	}
 
-	if strings.Contains(prCfg.Body, ".AISummary") {
-		aiSummary, err := aiSummarizer()
-		if err != nil {
-			return nil, err
-		}
+	aiSummary, err := aiSummarizer()
+	if err != nil {
+		return nil, err
+	}
+
+	if strings.Contains(prBody, ".AISummary") {
 		bodyData["AISummary"] = aiSummary
+	} else if aiSummary != "" {
+		prBody = aiSummary
 	}
 
 	res = bytes.Buffer{}
-	bodyTpl, err := template.New("pr-body-tpl").Funcs(funcMaps).Parse(prCfg.Body)
+	bodyTpl, err := template.New("pr-body-tpl").Funcs(funcMaps).Parse(prBody)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to parse pr body template")
 	}
@@ -136,12 +138,7 @@ func TemplatePR(
 	return pr, nil
 }
 
-func fetchCommits(ignoreCommitsPatterns []string, commitsFetcher CommitsFetcher) ([]string, error) {
-	commits, err := commitsFetcher()
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to fetch commits")
-	}
-
+func processCommits(ignoreCommitsPatterns []string, commits []string) ([]string, error) {
 	ignoreCommitsMatcher, err := regexp.Compile(strings.Join(ignoreCommitsPatterns, "|"))
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to compile ignore commits matcher")

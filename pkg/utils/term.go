@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"time"
@@ -26,7 +25,7 @@ func StartSpinner(loadingMsg string, finalMsg string) *spinner.Spinner {
 // Returns the edited string.
 func EditString(input string) (string, error) {
 	vi := "vi"
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "edit-branch-name")
+	tmpFile, err := os.CreateTemp(os.TempDir(), "edit-branch-name")
 	if err != nil {
 		return "", errors.Wrapf(err, "Failed to create temp file")
 	}

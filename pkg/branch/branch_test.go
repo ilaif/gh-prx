@@ -1,10 +1,11 @@
-package branch
+package branch_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ilaif/gh-prx/pkg/branch"
 	"github.com/ilaif/gh-prx/pkg/config"
 	"github.com/ilaif/gh-prx/pkg/models"
 )
@@ -62,7 +63,7 @@ func Test_ParseBranch(t *testing.T) {
 
 			test.config.SetDefaults()
 
-			b, err := ParseBranch(test.name, test.config)
+			b, err := branch.ParseBranch(test.name, test.config)
 			if test.err {
 				a.Error(err)
 			} else {

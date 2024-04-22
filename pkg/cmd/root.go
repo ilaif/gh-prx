@@ -21,17 +21,15 @@ func Execute(version string) {
 }
 
 func NewRootCmd(version string) *cobra.Command {
-	var (
-		debug bool
-	)
+	var debug bool
 
-	var rootCmd = &cobra.Command{
+	rootCmd := &cobra.Command{
 		Use:           "prx",
 		Short:         "Extended Git & GitHub CLI flows",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Version:       version,
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		PersistentPreRun: func(_ *cobra.Command, _ []string) {
 			log.SetLevel(log.InfoLevel)
 			log.DecreasePadding() // remove the default padding
 

@@ -14,16 +14,14 @@ import (
 	"github.com/ilaif/gh-prx/pkg/models"
 )
 
-var (
-	JiraIssueTypeToType = map[string]string{
-		"bug":   "fix",
-		"story": "feat",
-		"task":  "chore",
-	}
-)
+var JiraIssueTypeToType = map[string]string{
+	"bug":   "fix",
+	"story": "feat",
+	"task":  "chore",
+}
 
 type JiraIssueProvider struct {
-	Config         config.JiraConfig
+	Config         *config.JiraConfig
 	CheckoutNewCfg config.CheckoutNewJiraConfig
 }
 

@@ -18,17 +18,17 @@ A GitHub (`gh`) CLI extension to automate the daily work with **branches**, **co
 
 2. Checking out an automatically generated branch based on an issue id:
 
-    ```sh
-    gh prx checkout-new 1234 # Where 1234 is the issue's key. If not provided, a list of issues will be prompted.
-    ```
+   ```sh
+   gh prx checkout-new 1234 # Where 1234 is the issue's key. If not provided, a list of issues will be prompted.
+   ```
 
    <img src="https://github.com/ilaif/gh-prx/raw/main/assets/gh-prx-checkout-new-issue.gif" width="700">
 
 3. Creating a new PR with automatically generated title/body and checklist prompt:
 
-    ```sh
-    gh prx create
-    ```
+   ```sh
+   gh prx create
+   ```
 
    <img src="https://github.com/ilaif/gh-prx/raw/main/assets/gh-prx-create.gif" width="700">
 
@@ -44,16 +44,16 @@ Many of us find the terminal and CLI applications as our main toolkit.
 
 ## Features
 
-* Automatically creating new branches named based on issues fetched from project management tools
-  * Currently supported: GitHub, Jira, Linear
-* Extended PR creation:
-  * Automatically push branch to origin
-  * Parse branch names by a pattern into a customized PR title and description template
-  * Add labels based on issue types
-  * Filter commits and display them in the PR description
-  * Interactively answer PR checklists before creating the PR
-  * Use AI (🔮) to summarize the PR's changes
-  * All `gh pr create` original flags are extended into the tool
+- Automatically creating new branches named based on issues fetched from project management tools
+  - Currently supported: GitHub, Jira, Linear
+- Extended PR creation:
+  - Automatically push branch to origin
+  - Parse branch names by a pattern into a customized PR title and description template
+  - Add labels based on issue types
+  - Filter commits and display them in the PR description
+  - Interactively answer PR checklists before creating the PR
+  - Use AI (🔮) to summarize the PR's changes
+  - All `gh pr create` original flags are extended into the tool
 
 > `gh-prx` is an early-stage project. Got a new feature in mind? Open a pull request or a [feature request](https://github.com/ilaif/gh-prx/issues/new) 🙏
 
@@ -82,7 +82,6 @@ pr:
 issue:
    provider: github # The provider to use for fetching issue details (supported: github,jira,linear)
    types: ["fix", "feat", "chore", "docs", "refactor", "test", "style", "build", "ci", "perf", "revert"] # The issue types to prompt the user when creating a new branch
-   ignore_pull_request_template: false # If true, the pull request template in the repository will be ignored.
 checkout_new:
    jira:
       project: "" # The Jira project key to use when creating a new branch
@@ -90,30 +89,32 @@ checkout_new:
    github:
       issue_list_flags: ["--state", open", "--assignee", "@me"] # The flags to use when fetching issues from GitHub
    # linear: # Due to Linear's GraphQL API, the issue list is not configurable. The default is: `assignedIssues(orderBy: updatedAt, filter: { state: { type: { neq: \"completed\" } } })`
+pull_request_template_path: "./pull_request_template.md" # The pull request template file to use when creating a new PR. Relative to the repository root.
 ```
 
 ### PR Description (Body)
 
-The PR description is based on the repo's `.github/pull_request_template.md`. If this file does not exist, a default template is used:
+The PR description is based on the `pull_request_template_path` variable which defaults to the repo's `.github/pull_request_template.md`. If this file does not exist, a default template is used:
 
-   ```markdown
-   {{with .Issue}}Closes #{{.}}.
+```markdown
+{{with .Issue}}Closes #{{.}}.
 
-   {{end}}## Description
+{{end}}## Description
 
-   {{if .AISummary}}{{.AISummary}}{{ else }}{{humanize .Description}}
+{{if .AISummary}}{{.AISummary}}{{ else }}{{humanize .Description}}
 
-   Change(s) in this PR:
-   {{range $commit := .Commits}}
-   * {{$commit}}
-   {{- end}}
-   {{- end}}
+Change(s) in this PR:
+{{range $commit := .Commits}}
 
-   ## PR Checklist
+- {{$commit}}
+  {{- end}}
+  {{- end}}
 
-   - [ ] Tests are included
-   - [ ] Documentation is changed or added
-   ```
+## PR Checklist
+
+- [ ] Tests are included
+- [ ] Documentation is changed or added
+```
 
 ## Templating
 
@@ -129,13 +130,13 @@ Example:
 
 Given:
 
-* `token_separators: ["-"]`
-* `{{.Description}}`: "my-dashed-string"
-* Template:
+- `token_separators: ["-"]`
+- `{{.Description}}`: "my-dashed-string"
+- Template:
 
-   ```go-template
-   This is "{{ humanize .Description}}"
-   ```
+  ```go-template
+  This is "{{ humanize .Description}}"
+  ```
 
 Result:
 
@@ -157,11 +158,11 @@ Upper cases a string.
 
 ### Special template variable names
 
-* `{{.Type}}` - Used to interpret GitHub labels to add to the PR and issue type to add the branch name.
-* `{{.Issue}}` - Used as a placeholder for the issue key when creating a new branch.
-* `{{.Description}}` - Used as a placeholder for the issue title when creating a new branch.
-* `{{.Commits}}` - Used as a placeholder in a PR description (body) to iterate over filtered commits.
-* `{{.AISummary}}` - Used as a placeholder in a PR description (body) to add a summary of the PR's changes based on AI.
+- `{{.Type}}` - Used to interpret GitHub labels to add to the PR and issue type to add the branch name.
+- `{{.Issue}}` - Used as a placeholder for the issue key when creating a new branch.
+- `{{.Description}}` - Used as a placeholder for the issue title when creating a new branch.
+- `{{.Commits}}` - Used as a placeholder in a PR description (body) to iterate over filtered commits.
+- `{{.AISummary}}` - Used as a placeholder in a PR description (body) to add a summary of the PR's changes based on AI.
 
 ## AI summary configuration
 
